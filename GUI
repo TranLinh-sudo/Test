@@ -137,4 +137,102 @@ local Tab1 = CreateTab("Trạng thái")
 local Tab2 = CreateTab("Máy chủ")
 local Tab3 = CreateTab("Chung")
 local Tab4 = CreateTab("Biển")
-local Tab5 = CreateTab("
+local Tab5 = CreateTab("Vật phẩm")
+local Tab6 = CreateTab("Trái & Raid")
+local Tab7 = CreateTab("Di chuyển")
+local Tab8 = CreateTab("Cửa hàng")
+local Tab9 = CreateTab("Tộc v4")
+local Tab10 = CreateTab("Leviathan")
+local Tab11 = CreateTab("Núi lửa")
+local Tab12 = CreateTab("Đảo cáo")
+local Tab13 = CreateTab("Định vị")
+local Tab14 = CreateTab("Cài đặt")
+
+if FirstTab then FirstTab.Button.BackgroundColor3 = Theme.YellowBorder; FirstTab.Button.TextColor3 = Color3.new(0,0,0); FirstTab.Page.Visible = true end
+
+-- KÉO THẢ
+local function MakeDraggable(object)
+    local dragging, dragInput, dragStart, startPos
+    object.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; dragStart = input.Position; startPos = object.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end) end end)
+    object.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
+    UserInputService.InputChanged:Connect(function(input) if input == dragInput and dragging then local delta = input.Position - dragStart; TweenService:Create(object, TweenInfo.new(0.05), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play() end end)
+end
+MakeDraggable(MainFrame); MakeDraggable(OpenButton)
+
+-- /////////////////////////////////////////////////////////////
+-- /// LOGIC TAB 1: STATUS ///
+-- /////////////////////////////////////////////////////////////
+
+local function CreateInfoLabel(Parent, Title)
+    local Frame = Instance.new("Frame"); Frame.Parent = Parent; Frame.BackgroundTransparency = 1; Frame.Size = UDim2.new(1, -10, 0, 20)
+    local TitleLabel = Instance.new("TextLabel"); TitleLabel.Parent = Frame; TitleLabel.BackgroundTransparency = 1; TitleLabel.Position = UDim2.new(0, 0, 0, 0); TitleLabel.Size = UDim2.new(0.6, 0, 1, 0); TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.Text = Title; TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 200); TitleLabel.TextSize = 13; TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local ValueLabel = Instance.new("TextLabel"); ValueLabel.Parent = Frame; ValueLabel.BackgroundTransparency = 1; ValueLabel.Position = UDim2.new(0.6, 0, 0, 0); ValueLabel.Size = UDim2.new(0.4, 0, 1, 0); ValueLabel.Font = Enum.Font.GothamBold; ValueLabel.Text = "..."; ValueLabel.TextColor3 = Theme.YellowBorder; ValueLabel.TextSize = 13; ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    return ValueLabel
+end
+local function CreateHeader(Parent, Text)
+    local Label = Instance.new("TextLabel"); Label.Parent = Parent; Label.BackgroundTransparency = 1; Label.Size = UDim2.new(1, 0, 0, 25); Label.Font = Enum.Font.FredokaOne; Label.Text = "--- " .. Text .. " ---"; Label.TextColor3 = Theme.Text; Label.TextSize = 16
+end
+
+CreateHeader(Tab1, "THÔNG TIN NHÂN VẬT")
+local Lb_Name = CreateInfoLabel(Tab1, "Tên nhân vật:")
+local Lb_Level = CreateInfoLabel(Tab1, "Cấp độ:")
+local Lb_Beli = CreateInfoLabel(Tab1, "Beli:")
+local Lb_Frag = CreateInfoLabel(Tab1, "Fragment:")
+local Lb_Race = CreateInfoLabel(Tab1, "Tộc:")
+local Lb_Fruit = CreateInfoLabel(Tab1, "Trái ác quỷ:")
+
+local Spacer = Instance.new("Frame"); Spacer.Parent = Tab1; Spacer.Size = UDim2.new(1,0,0,10); Spacer.BackgroundTransparency=1
+
+CreateHeader(Tab1, "TRẠNG THÁI SERVER")
+local Lb_Moon = CreateInfoLabel(Tab1, "Full Moon:")
+local Lb_Mirage = CreateInfoLabel(Tab1, "Mirage Island:")
+local Lb_Kitsune = CreateInfoLabel(Tab1, "Kitsune Island:")
+local Lb_Dragon = CreateInfoLabel(Tab1, "Prehistoric Island:")
+local Lb_Frozen = CreateInfoLabel(Tab1, "Frozen Dimension:")
+local Lb_DimKill = CreateInfoLabel(Tab1, "Dimension Killed:")
+local Lb_Tyrant = CreateInfoLabel(Tab1, "Tyrant of the Skies:")
+local Lb_Indra = CreateInfoLabel(Tab1, "Rip_Indra:")
+local Lb_Elite = CreateInfoLabel(Tab1, "Elite Hunter:")
+local Lb_Pulever = CreateInfoLabel(Tab1, "Pulever:")
+local Lb_Sword = CreateInfoLabel(Tab1, "Legendary Sword:")
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            local Plr = game.Players.LocalPlayer
+            local Data = Plr:FindFirstChild("Data")
+            
+            -- Update Info
+            Lb_Name.Text = Plr.DisplayName
+            if Data then
+                Lb_Level.Text = tostring(Data.Level.Value)
+                Lb_Frag.Text = tostring(Data.Fragments.Value)
+                Lb_Race.Text = tostring(Data.Race.Value)
+                Lb_Fruit.Text = tostring(Data.DevilFruit.Value)
+            end
+            if Plr:FindFirstChild("leaderstats") and Plr.leaderstats:FindFirstChild("Beli") then
+                 Lb_Beli.Text = "$" .. Plr.leaderstats.Beli.Value
+            end
+
+            -- Update Server Status
+            if Lighting:GetMoonPhase() == Enum.MoonPhase.Full then Lb_Moon.Text = "✅ Có"; Lb_Moon.TextColor3 = Theme.Green else Lb_Moon.Text = "❌ Không"; Lb_Moon.TextColor3 = Theme.Red end
+            if workspace._WorldOrigin.Locations:FindFirstChild("Mirage Island") then Lb_Mirage.Text = "✅ Đã Spawn"; Lb_Mirage.TextColor3 = Theme.Green else Lb_Mirage.Text = "❌ Chưa có"; Lb_Mirage.TextColor3 = Theme.Red end
+            if workspace.Map:FindFirstChild("Kitsune Island") then Lb_Kitsune.Text = "✅ Đã Spawn"; Lb_Kitsune.TextColor3 = Theme.Green else Lb_Kitsune.Text = "❌ Chưa có"; Lb_Kitsune.TextColor3 = Theme.Red end
+            if workspace.Enemies:FindFirstChild("rip_indra True Form") then Lb_Indra.Text = "⚔️ Đang đánh"; Lb_Indra.TextColor3 = Theme.Green else Lb_Indra.Text = "❌ Chưa có"; Lb_Indra.TextColor3 = Theme.Red end
+
+            local EliteFound = false
+            for _, v in pairs(workspace.Enemies:GetChildren()) do
+                if v.Name == "Deandre" or v.Name == "Diablo" or v.Name == "Urban" then
+                    Lb_Elite.Text = "🎯 " .. v.Name; Lb_Elite.TextColor3 = Theme.Green; EliteFound = true; break
+                end
+            end
+            if not EliteFound then Lb_Elite.Text = "❌ Chưa có"; Lb_Elite.TextColor3 = Theme.Red end
+            
+            Lb_Dragon.Text = "Checking..."; Lb_Frozen.Text = "Checking..."
+            Lb_DimKill.Text = "Checking..."; Lb_Tyrant.Text = "Checking..."
+            Lb_Pulever.Text = "Checking..."; Lb_Sword.Text = "Checking..."
+        end)
+    end
+end)
+
+print("Banana Cat Hub Loaded Successfully!")
