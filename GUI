@@ -4,12 +4,12 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- /// 2. CẤU HÌNH GIAO DIỆN (THEME MỚI: NỀN ĐEN VIỀN VÀNG) ///
+-- /// 2. CẤU HÌNH GIAO DIỆN (THEME ĐEN - VIỀN VÀNG - TRONG SUỐT) ///
 local Theme = {
-    Background = Color3.fromRGB(30, 30, 30), -- Nền màu xám đen đậm (để nhìn xuyên thấu đẹp hơn đen tuyền)
-    YellowBorder = Color3.fromRGB(255, 235, 59), -- Màu vàng chuối cho viền
-    Text = Color3.fromRGB(255, 255, 255), -- Đổi màu chữ chính sang Trắng cho dễ đọc trên nền đen
-    Button = Color3.fromRGB(60, 60, 60), -- Nút màu xám sáng hơn nền một chút
+    Background = Color3.fromRGB(30, 30, 30),
+    YellowBorder = Color3.fromRGB(255, 235, 59),
+    Text = Color3.fromRGB(255, 255, 255),
+    Button = Color3.fromRGB(60, 60, 60),
     Red = Color3.fromRGB(255, 85, 85),
     Orange = Color3.fromRGB(255, 170, 0),
     BananaCatImage = "http://www.roblox.com/asset/?id=13693437997"
@@ -26,44 +26,45 @@ ScreenGui.Name = "BananaCatHub"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- /// 4. TẠO NÚT MỞ (ICON TRÒN) ///
+-- /// 4. TẠO NÚT ICON TRÒN (LUÔN HIỆN) ///
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
--- Icon nhỏ cũng dùng nền đen viền vàng
 OpenButton.BackgroundColor3 = Theme.Background 
 OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0)
 OpenButton.Size = UDim2.new(0, 60, 0, 60)
 OpenButton.Image = Theme.BananaCatImage
-OpenButton.Visible = false
+OpenButton.Visible = true -- [QUAN TRỌNG] Luôn hiện
 OpenButton.Active = true
+OpenButton.BackgroundTransparency = 0.2 -- Làm mờ nhẹ icon cho đẹp
 
 local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(1, 0)
 OpenCorner.Parent = OpenButton
 
 local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Color = Theme.YellowBorder -- Viền vàng cho icon nhỏ
+OpenStroke.Color = Theme.YellowBorder
 OpenStroke.Thickness = 3
 OpenStroke.Parent = OpenButton
 
--- /// 5. TẠO KHUNG CHÍNH (MAIN FRAME) - PHẦN QUAN TRỌNG NHẤT ///
+-- /// 5. TẠO KHUNG CHÍNH (MAIN FRAME) - RỘNG HƠN ///
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Theme.Background -- Áp dụng màu nền đen
-MainFrame.BackgroundTransparency = 0.6 -- [QUAN TRỌNG] Độ trong suốt (0 là đặc, 1 là tàng hình)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 450, 0, 300)
+MainFrame.BackgroundColor3 = Theme.Background
+MainFrame.BackgroundTransparency = 0.6
+-- [CHỈNH SỬA] Tăng chiều rộng lên 600, Chiều cao lên 350
+MainFrame.Size = UDim2.new(0, 600, 0, 350)
+-- [CHỈNH SỬA] Căn giữa lại (600/2 = 300, 350/2 = 175)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -175)
 MainFrame.ClipsDescendants = true
 
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = MainFrame
 
--- [QUAN TRỌNG] Tạo viền vàng cho khung chính
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Theme.YellowBorder -- Màu viền vàng
+UIStroke.Color = Theme.YellowBorder
 UIStroke.Thickness = 3
 UIStroke.Parent = MainFrame
 
@@ -79,11 +80,11 @@ local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
 Title.BackgroundTransparency = 1
 Title.Position = UDim2.new(0, 80, 0, 10)
-Title.Size = UDim2.new(0, 200, 0, 60)
+Title.Size = UDim2.new(0, 300, 0, 60) -- Kéo dài khung tiêu đề
 Title.Font = Enum.Font.FredokaOne
 Title.Text = "Banana Cat Hub 🍌"
-Title.TextColor3 = Theme.YellowBorder -- Đổi màu tiêu đề sang vàng cho nổi
-Title.TextSize = 28
+Title.TextColor3 = Theme.YellowBorder
+Title.TextSize = 32 -- Chữ to hơn xíu
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
 -- /// 6. CÁC NÚT ĐIỀU KHIỂN (X VÀ -) ///
@@ -111,22 +112,30 @@ MinimizeButton.TextColor3 = Color3.new(1,1,1)
 MinimizeButton.TextSize = 24
 local MinCorner = Instance.new("UICorner"); MinCorner.CornerRadius = UDim.new(0, 8); MinCorner.Parent = MinimizeButton
 
--- /// 7. LOGIC BẬT TẮT ///
+-- /// 7. LOGIC BẬT TẮT (ĐÃ SỬA LẠI CHO ICON LUÔN HIỆN) ///
+
+-- Nút X: Xóa sạch
 CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- Nút -: Chỉ ẩn Menu, Icon vẫn nằm im đó
 MinimizeButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
-    OpenButton.Visible = true
-    OpenButton.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(OpenButton, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 60, 0, 60)}):Play()
-end)
-OpenButton.MouseButton1Click:Connect(function()
-    OpenButton.Visible = false
-    MainFrame.Visible = true
-    MainFrame.Size = UDim2.new(0, 450, 0, 0)
-    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 450, 0, 300)}):Play()
 end)
 
--- /// 8. CHỨC NĂNG KÉO THẢ ///
+-- Nút Icon: Hoạt động như công tắc (Toggle)
+OpenButton.MouseButton1Click:Connect(function()
+    if MainFrame.Visible == true then
+        -- Nếu đang hiện thì ẩn đi (Hiệu ứng thu nhỏ)
+        MainFrame.Visible = false
+    else
+        -- Nếu đang ẩn thì hiện lên (Hiệu ứng bung ra)
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 600, 0, 0) -- Bắt đầu từ độ cao 0
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 600, 0, 350)}):Play()
+    end
+end)
+
+-- /// 8. CHỨC NĂNG KÉO THẢ (DRAG) ///
 local function MakeDraggable(object)
     local dragging, dragInput, dragStart, startPos
     object.InputBegan:Connect(function(input)
@@ -143,17 +152,18 @@ end
 MakeDraggable(MainFrame)
 MakeDraggable(OpenButton)
 
--- /// 9. KHU VỰC CHỨA CHỨC NĂNG ///
+-- /// 9. KHU VỰC CHỨA CHỨC NĂNG (ĐÃ MỞ RỘNG) ///
 local ButtonContainer = Instance.new("ScrollingFrame")
 ButtonContainer.Parent = MainFrame
 ButtonContainer.Active = true
 ButtonContainer.BackgroundColor3 = Theme.Background
-ButtonContainer.BackgroundTransparency = 1 -- Làm trong suốt nền khu vực nút
+ButtonContainer.BackgroundTransparency = 1
 ButtonContainer.BorderSizePixel = 0
 ButtonContainer.Position = UDim2.new(0, 20, 0, 80)
-ButtonContainer.Size = UDim2.new(0, 410, 0, 200)
+-- [CHỈNH SỬA] Rộng ra theo khung chính (600 - 40 = 560)
+ButtonContainer.Size = UDim2.new(0, 560, 0, 250)
 ButtonContainer.ScrollBarThickness = 4
-ButtonContainer.ScrollBarImageColor3 = Theme.YellowBorder -- Thanh kéo màu vàng luôn
+ButtonContainer.ScrollBarImageColor3 = Theme.YellowBorder
 
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = ButtonContainer
@@ -164,22 +174,22 @@ UIPadding.Parent = ButtonContainer
 UIPadding.PaddingTop = UDim.new(0, 10)
 UIPadding.PaddingLeft = UDim.new(0, 10)
 
--- Hàm tạo nút
+-- Hàm tạo nút (Tự động chỉnh độ rộng)
 local function CreateButton(text, callback)
     local Button = Instance.new("TextButton")
     Button.Parent = ButtonContainer
-    Button.BackgroundColor3 = Theme.Button -- Nút màu xám
-    Button.Size = UDim2.new(0, 380, 0, 40)
+    Button.BackgroundColor3 = Theme.Button
+    -- [CHỈNH SỬA] Nút dài ra (530px) để vừa khung mới
+    Button.Size = UDim2.new(0, 530, 0, 45) 
     Button.Font = Enum.Font.GothamBold
     Button.Text = text
-    Button.TextColor3 = Theme.Text -- Chữ màu trắng
+    Button.TextColor3 = Theme.Text
     Button.TextSize = 16
     
     local ButtonCorner = Instance.new("UICorner")
     ButtonCorner.CornerRadius = UDim.new(0, 8)
     ButtonCorner.Parent = Button
     
-    -- Thêm viền mỏng cho nút để nổi bật trên nền tối
     local BtnStroke = Instance.new("UIStroke")
     BtnStroke.Color = Theme.YellowBorder
     BtnStroke.Thickness = 1
@@ -187,14 +197,15 @@ local function CreateButton(text, callback)
     BtnStroke.Parent = Button
 
     Button.MouseButton1Click:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 360, 0, 35)}):Play()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 510, 0, 40)}):Play()
         task.wait(0.1)
-        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 380, 0, 40)}):Play()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 530, 0, 45)}):Play()
         callback()
     end)
 end
 
 -- /// VÍ DỤ CÁC CHỨC NĂNG ///
 CreateButton("Auto Farm (Beta)", function() print("Farm func") end)
-CreateButton("Teleport Safe Zone", function() print("TP Safe") end)
-CreateButton("ESP Player", function() print("ESP ON") end)
+CreateButton("Teleport Sea 1", function() print("TP Sea 1") end)
+CreateButton("Teleport Sea 2", function() print("TP Sea 2") end)
+CreateButton("Teleport Sea 3", function() print("TP Sea 3") end)
