@@ -4,18 +4,18 @@ local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- /// 2. CẤU HÌNH GIAO DIỆN ///
+-- /// 2. CẤU HÌNH GIAO DIỆN (THEME MỚI: NỀN ĐEN VIỀN VÀNG) ///
 local Theme = {
-    Background = Color3.fromRGB(255, 235, 59), -- Vàng chuối
-    DarkerYellow = Color3.fromRGB(253, 216, 53),
-    Text = Color3.fromRGB(50, 50, 50),
-    Button = Color3.fromRGB(255, 255, 255),
-    Red = Color3.fromRGB(255, 85, 85), -- Màu đỏ cho nút X
-    Orange = Color3.fromRGB(255, 170, 0), -- Màu cam cho nút Minimize
+    Background = Color3.fromRGB(30, 30, 30), -- Nền màu xám đen đậm (để nhìn xuyên thấu đẹp hơn đen tuyền)
+    YellowBorder = Color3.fromRGB(255, 235, 59), -- Màu vàng chuối cho viền
+    Text = Color3.fromRGB(255, 255, 255), -- Đổi màu chữ chính sang Trắng cho dễ đọc trên nền đen
+    Button = Color3.fromRGB(60, 60, 60), -- Nút màu xám sáng hơn nền một chút
+    Red = Color3.fromRGB(255, 85, 85),
+    Orange = Color3.fromRGB(255, 170, 0),
     BananaCatImage = "http://www.roblox.com/asset/?id=13693437997"
 }
 
--- Xóa GUI cũ để không bị trùng
+-- Xóa GUI cũ
 if CoreGui:FindFirstChild("BananaCatHub") then
     CoreGui.BananaCatHub:Destroy()
 end
@@ -26,32 +26,33 @@ ScreenGui.Name = "BananaCatHub"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- /// 4. TẠO NÚT MỞ (TOGGLE ICON) - MẶC ĐỊNH ẨN ///
+-- /// 4. TẠO NÚT MỞ (ICON TRÒN) ///
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
-OpenButton.BackgroundColor3 = Theme.Background
-OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0) -- Vị trí mặc định
+-- Icon nhỏ cũng dùng nền đen viền vàng
+OpenButton.BackgroundColor3 = Theme.Background 
+OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0)
 OpenButton.Size = UDim2.new(0, 60, 0, 60)
 OpenButton.Image = Theme.BananaCatImage
-OpenButton.Visible = false -- Ban đầu ẩn đi, chỉ hiện khi thu nhỏ Hub
+OpenButton.Visible = false
 OpenButton.Active = true
 
--- Bo tròn nút mở thành hình tròn
 local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(1, 0) -- Tròn 100%
+OpenCorner.CornerRadius = UDim.new(1, 0)
 OpenCorner.Parent = OpenButton
 
 local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Color = Color3.fromRGB(255, 255, 255)
+OpenStroke.Color = Theme.YellowBorder -- Viền vàng cho icon nhỏ
 OpenStroke.Thickness = 3
 OpenStroke.Parent = OpenButton
 
--- /// 5. TẠO KHUNG CHÍNH (MAIN FRAME) ///
+-- /// 5. TẠO KHUNG CHÍNH (MAIN FRAME) - PHẦN QUAN TRỌNG NHẤT ///
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Theme.Background
+MainFrame.BackgroundColor3 = Theme.Background -- Áp dụng màu nền đen
+MainFrame.BackgroundTransparency = 0.6 -- [QUAN TRỌNG] Độ trong suốt (0 là đặc, 1 là tàng hình)
 MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
 MainFrame.Size = UDim2.new(0, 450, 0, 300)
 MainFrame.ClipsDescendants = true
@@ -60,8 +61,9 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = MainFrame
 
+-- [QUAN TRỌNG] Tạo viền vàng cho khung chính
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UIStroke.Color = Theme.YellowBorder -- Màu viền vàng
 UIStroke.Thickness = 3
 UIStroke.Parent = MainFrame
 
@@ -80,13 +82,11 @@ Title.Position = UDim2.new(0, 80, 0, 10)
 Title.Size = UDim2.new(0, 200, 0, 60)
 Title.Font = Enum.Font.FredokaOne
 Title.Text = "Banana Cat Hub 🍌"
-Title.TextColor3 = Theme.Text
+Title.TextColor3 = Theme.YellowBorder -- Đổi màu tiêu đề sang vàng cho nổi
 Title.TextSize = 28
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
 -- /// 6. CÁC NÚT ĐIỀU KHIỂN (X VÀ -) ///
-
--- Nút X (Đóng/Xóa Script)
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "Close"
 CloseButton.Parent = MainFrame
@@ -99,12 +99,11 @@ CloseButton.TextColor3 = Color3.new(1,1,1)
 CloseButton.TextSize = 18
 local CloseCorner = Instance.new("UICorner"); CloseCorner.CornerRadius = UDim.new(0, 8); CloseCorner.Parent = CloseButton
 
--- Nút - (Thu nhỏ/Minimize)
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Name = "Minimize"
 MinimizeButton.Parent = MainFrame
 MinimizeButton.BackgroundColor3 = Theme.Orange
-MinimizeButton.Position = UDim2.new(1, -75, 0, 10) -- Đặt bên trái nút X
+MinimizeButton.Position = UDim2.new(1, -75, 0, 10)
 MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
 MinimizeButton.Font = Enum.Font.FredokaOne
 MinimizeButton.Text = "-"
@@ -112,106 +111,80 @@ MinimizeButton.TextColor3 = Color3.new(1,1,1)
 MinimizeButton.TextSize = 24
 local MinCorner = Instance.new("UICorner"); MinCorner.CornerRadius = UDim.new(0, 8); MinCorner.Parent = MinimizeButton
 
--- /// 7. LOGIC BẬT TẮT (TOGGLE LOGIC) ///
-
--- Khi bấm nút X: Xóa GUI
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
--- Khi bấm nút -: Ẩn Menu, Hiện Icon
+-- /// 7. LOGIC BẬT TẮT ///
+CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 MinimizeButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     OpenButton.Visible = true
-    
-    -- Hiệu ứng nảy cho Icon
     OpenButton.Size = UDim2.new(0, 0, 0, 0)
     TweenService:Create(OpenButton, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 60, 0, 60)}):Play()
 end)
-
--- Khi bấm Icon Mở: Ẩn Icon, Hiện Menu
 OpenButton.MouseButton1Click:Connect(function()
     OpenButton.Visible = false
     MainFrame.Visible = true
-    
-    -- Hiệu ứng hiện Menu
     MainFrame.Size = UDim2.new(0, 450, 0, 0)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 450, 0, 300)}):Play()
 end)
 
--- /// 8. CHỨC NĂNG KÉO THẢ (DRAG SCRIPT) ///
--- Hàm xử lý kéo thả chung cho mọi vật thể
+-- /// 8. CHỨC NĂNG KÉO THẢ ///
 local function MakeDraggable(object)
     local dragging, dragInput, dragStart, startPos
-    
     object.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = object.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
         end
     end)
-    
-    object.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            -- Sử dụng Tween để kéo mượt mà hơn
-            TweenService:Create(object, TweenInfo.new(0.05), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play()
-        end
-    end)
+    object.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
+    UserInputService.InputChanged:Connect(function(input) if input == dragInput and dragging then local delta = input.Position - dragStart; TweenService:Create(object, TweenInfo.new(0.05), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}):Play() end end)
 end
-
--- Áp dụng kéo thả cho cả Menu và Icon
 MakeDraggable(MainFrame)
 MakeDraggable(OpenButton)
 
--- /// 9. KHU VỰC CHỨA CHỨC NĂNG (CONTAINER) ///
+-- /// 9. KHU VỰC CHỨA CHỨC NĂNG ///
 local ButtonContainer = Instance.new("ScrollingFrame")
 ButtonContainer.Parent = MainFrame
 ButtonContainer.Active = true
-ButtonContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ButtonContainer.BackgroundTransparency = 0.5
+ButtonContainer.BackgroundColor3 = Theme.Background
+ButtonContainer.BackgroundTransparency = 1 -- Làm trong suốt nền khu vực nút
 ButtonContainer.BorderSizePixel = 0
 ButtonContainer.Position = UDim2.new(0, 20, 0, 80)
 ButtonContainer.Size = UDim2.new(0, 410, 0, 200)
 ButtonContainer.ScrollBarThickness = 4
+ButtonContainer.ScrollBarImageColor3 = Theme.YellowBorder -- Thanh kéo màu vàng luôn
 
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Parent = ButtonContainer
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 10)
-
 local UIPadding = Instance.new("UIPadding")
 UIPadding.Parent = ButtonContainer
 UIPadding.PaddingTop = UDim.new(0, 10)
 UIPadding.PaddingLeft = UDim.new(0, 10)
 
--- Hàm tạo nút (như cũ)
+-- Hàm tạo nút
 local function CreateButton(text, callback)
     local Button = Instance.new("TextButton")
     Button.Parent = ButtonContainer
-    Button.BackgroundColor3 = Theme.Button
+    Button.BackgroundColor3 = Theme.Button -- Nút màu xám
     Button.Size = UDim2.new(0, 380, 0, 40)
     Button.Font = Enum.Font.GothamBold
     Button.Text = text
-    Button.TextColor3 = Theme.Text
+    Button.TextColor3 = Theme.Text -- Chữ màu trắng
     Button.TextSize = 16
     
     local ButtonCorner = Instance.new("UICorner")
     ButtonCorner.CornerRadius = UDim.new(0, 8)
     ButtonCorner.Parent = Button
+    
+    -- Thêm viền mỏng cho nút để nổi bật trên nền tối
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Color = Theme.YellowBorder
+    BtnStroke.Thickness = 1
+    BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    BtnStroke.Parent = Button
 
     Button.MouseButton1Click:Connect(function()
         TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 360, 0, 35)}):Play()
@@ -222,10 +195,6 @@ local function CreateButton(text, callback)
 end
 
 -- /// VÍ DỤ CÁC CHỨC NĂNG ///
-CreateButton("Auto Farm (Beta)", function()
-    print("Farm func")
-end)
-
-CreateButton("Teleport Safe Zone", function()
-    print("TP Safe")
-end)
+CreateButton("Auto Farm (Beta)", function() print("Farm func") end)
+CreateButton("Teleport Safe Zone", function() print("TP Safe") end)
+CreateButton("ESP Player", function() print("ESP ON") end)
