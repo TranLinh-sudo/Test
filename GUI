@@ -10,7 +10,7 @@ local Theme = {
     YellowBorder = Color3.fromRGB(255, 235, 59),
     Text = Color3.fromRGB(255, 255, 255),
     Button = Color3.fromRGB(50, 50, 50),
-    SelectedTab = Color3.fromRGB(80, 80, 80),
+    SelectedTab = Color3.fromRGB(80, 80, 80), -- Màu khi chọn Tab
     Red = Color3.fromRGB(255, 85, 85),
     Orange = Color3.fromRGB(255, 170, 0),
     BananaCatImage = "http://www.roblox.com/asset/?id=13693437997"
@@ -66,9 +66,12 @@ OpenButton.MouseButton1Click:Connect(function()
     if MainFrame.Visible then MainFrame.Visible = false else MainFrame.Visible = true; MainFrame.Size = UDim2.new(0, 550, 0, 0); TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 550, 0, 280)}):Play() end
 end)
 
--- /// 6. HỆ THỐNG TAB (SIDEBAR ĐÃ THU HẸP) ///
+-- /// 6. HỆ THỐNG TAB (SIDEBAR & PAGES) ///
 
--- Sidebar (Danh sách Tab)
+-- Thanh dọc ngăn cách Sidebar và Content
+local VSeparator = Instance.new("Frame"); VSeparator.Parent = MainFrame; VSeparator.BackgroundColor3 = Theme.YellowBorder; VSeparator.BorderSizePixel = 0; VSeparator.Position = UDim2.new(0, 130, 0, 25); VSeparator.Size = UDim2.new(0, 2, 1, -25)
+
+-- Sidebar (Chứa danh sách 14 Tab)
 local Sidebar = Instance.new("ScrollingFrame")
 Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
@@ -76,32 +79,20 @@ Sidebar.Active = true
 Sidebar.BackgroundColor3 = Theme.Background
 Sidebar.BackgroundTransparency = 1
 Sidebar.BorderSizePixel = 0
-Sidebar.Position = UDim2.new(0, 5, 0, 30)
--- [THAY ĐỔI] Chiều rộng giảm xuống còn 95 (trước là 120)
-Sidebar.Size = UDim2.new(0, 95, 0, 245) 
+Sidebar.Position = UDim2.new(0, 5, 0, 30) -- Dưới Header 5px
+Sidebar.Size = UDim2.new(0, 120, 0, 245) -- Rộng 120px
 Sidebar.ScrollBarThickness = 2
 Sidebar.ScrollBarImageColor3 = Theme.YellowBorder
 
 local SidebarLayout = Instance.new("UIListLayout"); SidebarLayout.Parent = Sidebar; SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder; SidebarLayout.Padding = UDim.new(0, 5)
 
--- Thanh dọc ngăn cách (Tự động dời sang trái)
-local VSeparator = Instance.new("Frame")
-VSeparator.Parent = MainFrame
-VSeparator.BackgroundColor3 = Theme.YellowBorder
-VSeparator.BorderSizePixel = 0
--- [THAY ĐỔI] Dời về vị trí X=105 (Sát Sidebar mới)
-VSeparator.Position = UDim2.new(0, 105, 0, 25) 
-VSeparator.Size = UDim2.new(0, 2, 1, -25)
-
--- Container (Nơi chứa nút chức năng)
+-- Container (Chứa nội dung từng Tab)
 local PageContainer = Instance.new("Frame")
 PageContainer.Name = "PageContainer"
 PageContainer.Parent = MainFrame
 PageContainer.BackgroundTransparency = 1
--- [THAY ĐỔI] Dời về vị trí X=115
-PageContainer.Position = UDim2.new(0, 115, 0, 30) 
--- [THAY ĐỔI] Tăng chiều rộng lên 425 (Tận dụng khoảng trống)
-PageContainer.Size = UDim2.new(0, 425, 0, 240)
+PageContainer.Position = UDim2.new(0, 140, 0, 30) -- Nằm bên phải thanh ngăn cách
+PageContainer.Size = UDim2.new(0, 400, 0, 240)
 
 -- Biến lưu trữ các Tab
 local Tabs = {}
@@ -109,16 +100,18 @@ local FirstTab = nil
 
 -- Hàm tạo Tab mới
 local function CreateTab(TabName)
+    -- 1. Tạo Nút bấm bên trái
     local TabButton = Instance.new("TextButton")
     TabButton.Parent = Sidebar
     TabButton.BackgroundColor3 = Theme.Button
-    TabButton.Size = UDim2.new(1, 0, 0, 25)
+    TabButton.Size = UDim2.new(1, 0, 0, 25) -- Cao 25px mỗi tab
     TabButton.Font = Enum.Font.GothamBold
     TabButton.Text = TabName
     TabButton.TextColor3 = Theme.Text
-    TabButton.TextSize = 11 -- [THAY ĐỔI] Giảm cỡ chữ xuống 11 cho vừa khung hẹp
+    TabButton.TextSize = 12
     local TCorner = Instance.new("UICorner"); TCorner.CornerRadius = UDim.new(0, 4); TCorner.Parent = TabButton
     
+    -- 2. Tạo Trang nội dung bên phải (Mặc định ẩn)
     local Page = Instance.new("ScrollingFrame")
     Page.Name = TabName .. "_Page"
     Page.Parent = PageContainer
@@ -126,29 +119,46 @@ local function CreateTab(TabName)
     Page.Size = UDim2.new(1, 0, 1, 0)
     Page.ScrollBarThickness = 2
     Page.ScrollBarImageColor3 = Theme.YellowBorder
-    Page.Visible = false
+    Page.Visible = false -- Ẩn đi
     
     local PageLayout = Instance.new("UIListLayout"); PageLayout.Parent = Page; PageLayout.SortOrder = Enum.SortOrder.LayoutOrder; PageLayout.Padding = UDim.new(0, 5)
     local PagePadding = Instance.new("UIPadding"); PagePadding.Parent = Page; PagePadding.PaddingTop = UDim.new(0, 5); PagePadding.PaddingLeft = UDim.new(0, 5)
     
+    -- 3. Logic chuyển Tab
     TabButton.MouseButton1Click:Connect(function()
-        for _, item in pairs(PageContainer:GetChildren()) do if item:IsA("ScrollingFrame") then item.Visible = false end end
-        for _, btn in pairs(Sidebar:GetChildren()) do if btn:IsA("TextButton") then btn.BackgroundColor3 = Theme.Button; btn.TextColor3 = Theme.Text end end
+        -- Tắt hết các trang khác
+        for _, item in pairs(PageContainer:GetChildren()) do
+            if item:IsA("ScrollingFrame") then item.Visible = false end
+        end
+        -- Reset màu các nút
+        for _, btn in pairs(Sidebar:GetChildren()) do
+            if btn:IsA("TextButton") then 
+                btn.BackgroundColor3 = Theme.Button
+                btn.TextColor3 = Theme.Text
+            end
+        end
+        
+        -- Bật trang hiện tại
         Page.Visible = true
+        -- Đổi màu nút để biết đang chọn
         TabButton.BackgroundColor3 = Theme.YellowBorder
-        TabButton.TextColor3 = Color3.new(0,0,0)
+        TabButton.TextColor3 = Color3.new(0,0,0) -- Chữ đen cho dễ đọc trên nền vàng
     end)
     
-    if FirstTab == nil then FirstTab = {Button = TabButton, Page = Page} end
-    return Page
+    -- Lưu tab đầu tiên để bật mặc định
+    if FirstTab == nil then
+        FirstTab = {Button = TabButton, Page = Page}
+    end
+    
+    return Page -- Trả về trang để thêm nút vào sau
 end
 
--- Hàm tạo nút chức năng
+-- Hàm tạo nút chức năng (Thêm vào trang cụ thể)
 local function AddButton(Page, Text, Callback)
     local Button = Instance.new("TextButton")
     Button.Parent = Page
     Button.BackgroundColor3 = Theme.Button
-    Button.Size = UDim2.new(1, -10, 0, 30)
+    Button.Size = UDim2.new(1, -10, 0, 30) -- Trừ 10px để không che thanh scroll
     Button.Font = Enum.Font.GothamBold
     Button.Text = Text
     Button.TextColor3 = Theme.Text
@@ -160,12 +170,12 @@ local function AddButton(Page, Text, Callback)
     Button.MouseButton1Click:Connect(function()
         TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(1, -20, 0, 28)}):Play()
         task.wait(0.1)
-        TweenService:Create(Button, TweenInfo.new(1, -10, 0, 30)}):Play()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 30)}):Play()
         Callback()
     end)
 end
 
--- /// 7. TẠO 14 TAB ///
+-- /// 7. TẠO 14 TAB THEO YÊU CẦU ///
 local Tab1 = CreateTab("Trạng thái")
 local Tab2 = CreateTab("Máy chủ")
 local Tab3 = CreateTab("Chung")
@@ -181,14 +191,28 @@ local Tab12 = CreateTab("Đảo cáo")
 local Tab13 = CreateTab("Định vị")
 local Tab14 = CreateTab("Cài đặt")
 
-if FirstTab then FirstTab.Button.BackgroundColor3 = Theme.YellowBorder; FirstTab.Button.TextColor3 = Color3.new(0,0,0); FirstTab.Page.Visible = true end
+-- Kích hoạt Tab đầu tiên mặc định
+if FirstTab then
+    FirstTab.Button.BackgroundColor3 = Theme.YellowBorder
+    FirstTab.Button.TextColor3 = Color3.new(0,0,0)
+    FirstTab.Page.Visible = true
+end
 
--- /// 8. VÍ DỤ NÚT (TEST) ///
-AddButton(Tab1, "Xem thông tin", function() print("Info") end)
-AddButton(Tab3, "Auto Farm Level", function() print("Farming...") end)
-AddButton(Tab7, "Teleport Sea 3", function() print("TP") end)
+-- /// 8. VÍ DỤ THÊM NÚT VÀO CÁC TAB ///
 
--- Kéo thả
+-- Tab 1: Trạng thái
+AddButton(Tab1, "Xem thông tin nhân vật", function() print("Info") end)
+
+-- Tab 7: Di chuyển
+AddButton(Tab7, "Teleport Sea 1", function() print("TP 1") end)
+AddButton(Tab7, "Teleport Sea 2", function() print("TP 2") end)
+AddButton(Tab7, "Teleport Sea 3", function() print("TP 3") end)
+
+-- Tab 13: Định vị
+AddButton(Tab13, "ESP Player", function() print("ESP ON") end)
+AddButton(Tab13, "ESP Fruit", function() print("ESP Fruit") end)
+
+-- Kéo thả GUI
 local function MakeDraggable(object)
     local dragging, dragInput, dragStart, startPos
     object.InputBegan:Connect(function(input)
