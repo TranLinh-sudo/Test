@@ -1,0 +1,164 @@
+-- /// 1. KHỞI TẠO DỊCH VỤ ///
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+
+-- /// 2. CẤU HÌNH GIAO DIỆN (THEME BANANA) ///
+local Theme = {
+    Background = Color3.fromRGB(255, 235, 59), -- Màu vàng chuối
+    DarkerYellow = Color3.fromRGB(253, 216, 53), -- Vàng đậm hơn cho Header
+    Text = Color3.fromRGB(50, 50, 50), -- Màu chữ đen xám
+    Button = Color3.fromRGB(255, 255, 255), -- Nút màu trắng
+    BananaCatImage = "http://www.roblox.com/asset/?id=13693437997" -- ID ảnh Banana Cat (Ví dụ)
+}
+
+-- Xóa GUI cũ nếu tồn tại để không bị chồng lấp
+if CoreGui:FindFirstChild("BananaCatHub") then
+    CoreGui.BananaCatHub:Destroy()
+end
+
+-- /// 3. TẠO SCREEN GUI ///
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BananaCatHub"
+ScreenGui.Parent = CoreGui -- Đưa vào CoreGui để không bị game reset khi chết
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- /// 4. TẠO KHUNG CHÍNH (MAIN FRAME) ///
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Theme.Background
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Căn giữa màn hình
+MainFrame.Size = UDim2.new(0, 450, 0, 300) -- Kích thước menu
+MainFrame.ClipsDescendants = true -- Cắt bỏ phần thừa
+
+-- Bo tròn góc cho đẹp
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+-- Thêm viền (Stroke)
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UIStroke.Thickness = 3
+UIStroke.Parent = MainFrame
+
+-- /// 5. TẠO HÌNH ẢNH BANANA CAT (LOGO) ///
+local Logo = Instance.new("ImageLabel")
+Logo.Name = "BananaLogo"
+Logo.Parent = MainFrame
+Logo.BackgroundTransparency = 1
+Logo.Position = UDim2.new(0, 10, 0, 10)
+Logo.Size = UDim2.new(0, 60, 0, 60)
+Logo.Image = Theme.BananaCatImage 
+
+-- /// 6. TIÊU ĐỀ (TITLE) ///
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 80, 0, 10)
+Title.Size = UDim2.new(0, 200, 0, 60)
+Title.Font = Enum.Font.FredokaOne -- Font chữ vui nhộn
+Title.Text = "Banana Cat Hub 🍌"
+Title.TextColor3 = Theme.Text
+Title.TextSize = 28
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- /// 7. CONTAINER CHỨA CÁC NÚT CHỨC NĂNG ///
+local ButtonContainer = Instance.new("ScrollingFrame")
+ButtonContainer.Parent = MainFrame
+ButtonContainer.Active = true
+ButtonContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ButtonContainer.BackgroundTransparency = 0.5
+ButtonContainer.BorderSizePixel = 0
+ButtonContainer.Position = UDim2.new(0, 20, 0, 80)
+ButtonContainer.Size = UDim2.new(0, 410, 0, 200)
+ButtonContainer.ScrollBarThickness = 4
+
+-- Layout tự động sắp xếp nút
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = ButtonContainer
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 10)
+
+local UIPadding = Instance.new("UIPadding")
+UIPadding.Parent = ButtonContainer
+UIPadding.PaddingTop = UDim.new(0, 10)
+UIPadding.PaddingLeft = UDim.new(0, 10)
+
+-- /// 8. HÀM TẠO NÚT NHANH (FUNCTION) ///
+-- Đây là phần giúp bạn tạo nút dễ dàng sau này
+local function CreateButton(text, callback)
+    local Button = Instance.new("TextButton")
+    Button.Parent = ButtonContainer
+    Button.BackgroundColor3 = Theme.Button
+    Button.Size = UDim2.new(0, 380, 0, 40)
+    Button.Font = Enum.Font.GothamBold
+    Button.Text = text
+    Button.TextColor3 = Theme.Text
+    Button.TextSize = 16
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 8)
+    ButtonCorner.Parent = Button
+
+    -- Hiệu ứng khi bấm
+    Button.MouseButton1Click:Connect(function()
+        -- Hiệu ứng nhỏ lại khi bấm
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 360, 0, 35)}):Play()
+        task.wait(0.1)
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 380, 0, 40)}):Play()
+        
+        -- Chạy chức năng
+        callback()
+    end)
+end
+
+-- /// 9. THÊM CHỨC NĂNG VÀO MENU ///
+CreateButton("Auto Farm Level 🍌", function()
+    print("Đang bật Auto Farm...")
+    -- Gọi hàm Auto Farm của bạn ở đây
+end)
+
+CreateButton("Teleport Sea 2 🌊", function()
+    print("Đang TP...")
+end)
+
+CreateButton("Nhận Code Mới Nhất 🎁", function()
+    print("Đã nhập code!")
+end)
+
+-- /// 10. CHỨC NĂNG KÉO THẢ (DRAGGABLE) ///
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
