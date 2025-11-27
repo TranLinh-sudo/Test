@@ -7,7 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 -- /// 2. CẤU HÌNH GIAO DIỆN ///
 local Theme = {
     Background = Color3.fromRGB(30, 30, 30),
-    YellowBorder = Color3.fromRGB(255, 235, 59), -- Màu vàng chủ đạo
+    YellowBorder = Color3.fromRGB(255, 235, 59),
     Text = Color3.fromRGB(255, 255, 255),
     Button = Color3.fromRGB(60, 60, 60),
     Red = Color3.fromRGB(255, 85, 85),
@@ -24,86 +24,79 @@ ScreenGui.Name = "BananaCatHub"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- /// 3. NÚT ICON TRÒN (LUÔN HIỆN) ///
+-- /// 3. NÚT ICON TRÒN (GIỮ NGUYÊN BÉ XINH) ///
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
 OpenButton.BackgroundColor3 = Theme.Background 
 OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-OpenButton.Size = UDim2.new(0, 60, 0, 60)
+OpenButton.Size = UDim2.new(0, 45, 0, 45) 
 OpenButton.Image = Theme.BananaCatImage
 OpenButton.Visible = true
 OpenButton.Active = true
 OpenButton.BackgroundTransparency = 0.2
 
 local OpenCorner = Instance.new("UICorner"); OpenCorner.CornerRadius = UDim.new(1, 0); OpenCorner.Parent = OpenButton
-local OpenStroke = Instance.new("UIStroke"); OpenStroke.Color = Theme.YellowBorder; OpenStroke.Thickness = 3; OpenStroke.Parent = OpenButton
+local OpenStroke = Instance.new("UIStroke"); OpenStroke.Color = Theme.YellowBorder; OpenStroke.Thickness = 2; OpenStroke.Parent = OpenButton
 
--- /// 4. KHUNG CHÍNH (MAIN FRAME) ///
+-- /// 4. KHUNG CHÍNH (MAIN FRAME) - TỈ LỆ WIDESCREEN ///
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BackgroundTransparency = 0.6
--- [THAY ĐỔI] Chiều rộng giảm còn 500, Dài giữ 350
-MainFrame.Size = UDim2.new(0, 500, 0, 350)
--- Căn giữa (500/2 = 250)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+-- [THAY ĐỔI] Ngang tăng lên 550, Dọc giảm xuống 280
+MainFrame.Size = UDim2.new(0, 550, 0, 280)
+-- [THAY ĐỔI] Căn giữa lại (550/2 = 275, 280/2 = 140)
+MainFrame.Position = UDim2.new(0.5, -275, 0.5, -140)
 MainFrame.ClipsDescendants = true
 
-local UICorner = Instance.new("UICorner"); UICorner.CornerRadius = UDim.new(0, 15); UICorner.Parent = MainFrame
+local UICorner = Instance.new("UICorner"); UICorner.CornerRadius = UDim.new(0, 10); UICorner.Parent = MainFrame
 local UIStroke = Instance.new("UIStroke"); UIStroke.Color = Theme.YellowBorder; UIStroke.Thickness = 3; UIStroke.Parent = MainFrame
 
--- /// 5. PHẦN TIÊU ĐỀ (HEADER) ///
+-- /// 5. HEADER COMPACT (GIỮ NGUYÊN) ///
 local Logo = Instance.new("ImageLabel")
 Logo.Parent = MainFrame
 Logo.BackgroundTransparency = 1
-Logo.Position = UDim2.new(0, 10, 0, 10)
-Logo.Size = UDim2.new(0, 55, 0, 55)
+Logo.Position = UDim2.new(0, 5, 0, 5)
+Logo.Size = UDim2.new(0, 30, 0, 30) 
 Logo.Image = Theme.BananaCatImage
 
 local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 75, 0, 10) -- Dịch sang phải để né logo
-Title.Size = UDim2.new(0, 300, 0, 55)
+Title.Position = UDim2.new(0, 40, 0, 5)
+Title.Size = UDim2.new(0, 200, 0, 30)
 Title.Font = Enum.Font.FredokaOne
-Title.Text = "Banana Cat Hub 🍌"
+Title.Text = "Banana Cat Hub"
 Title.TextColor3 = Theme.YellowBorder
-Title.TextSize = 28
+Title.TextSize = 20 
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- /// [MỚI] DÒNG KẺ NGANG (SEPARATOR) ///
 local Separator = Instance.new("Frame")
 Separator.Name = "Line"
 Separator.Parent = MainFrame
-Separator.BackgroundColor3 = Theme.YellowBorder -- Cùng màu viền
+Separator.BackgroundColor3 = Theme.YellowBorder
 Separator.BorderSizePixel = 0
--- Vị trí: Nằm ngay dưới Logo/Title (Y = 70)
-Separator.Position = UDim2.new(0, 0, 0, 70)
--- Kích thước: Rộng hết khung (Scale 1), cao 2 pixel
-Separator.Size = UDim2.new(1, 0, 0, 2) 
+Separator.Position = UDim2.new(0, 0, 0, 40) 
+Separator.Size = UDim2.new(1, 0, 0, 2)
 
--- /// 6. CÁC NÚT ĐIỀU KHIỂN (X VÀ -) ///
+-- /// 6. CÁC NÚT ĐIỀU KHIỂN ///
 local CloseButton = Instance.new("TextButton")
 CloseButton.Parent = MainFrame
 CloseButton.BackgroundColor3 = Theme.Red
-CloseButton.Position = UDim2.new(1, -40, 0, 15) -- Canh chỉnh lại cho đẹp
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Font = Enum.Font.FredokaOne
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.new(1,1,1); CloseButton.TextSize = 18
-local CloseCorner = Instance.new("UICorner"); CloseCorner.CornerRadius = UDim.new(0, 8); CloseCorner.Parent = CloseButton
+CloseButton.Position = UDim2.new(1, -30, 0, 8)
+CloseButton.Size = UDim2.new(0, 24, 0, 24) 
+CloseButton.Font = Enum.Font.FredokaOne; CloseButton.Text = "X"; CloseButton.TextColor3 = Color3.new(1,1,1); CloseButton.TextSize = 14
+local CloseCorner = Instance.new("UICorner"); CloseCorner.CornerRadius = UDim.new(0, 6); CloseCorner.Parent = CloseButton
 
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Parent = MainFrame
 MinimizeButton.BackgroundColor3 = Theme.Orange
-MinimizeButton.Position = UDim2.new(1, -75, 0, 15)
-MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
-MinimizeButton.Font = Enum.Font.FredokaOne
-MinimizeButton.Text = "-"
-MinimizeButton.TextColor3 = Color3.new(1,1,1); MinimizeButton.TextSize = 24
-local MinCorner = Instance.new("UICorner"); MinCorner.CornerRadius = UDim.new(0, 8); MinCorner.Parent = MinimizeButton
+MinimizeButton.Position = UDim2.new(1, -60, 0, 8)
+MinimizeButton.Size = UDim2.new(0, 24, 0, 24)
+MinimizeButton.Font = Enum.Font.FredokaOne; MinimizeButton.Text = "-"; MinimizeButton.TextColor3 = Color3.new(1,1,1); MinimizeButton.TextSize = 18
+local MinCorner = Instance.new("UICorner"); MinCorner.CornerRadius = UDim.new(0, 6); MinCorner.Parent = MinimizeButton
 
 -- /// 7. LOGIC BẬT TẮT ///
 CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
@@ -113,8 +106,8 @@ OpenButton.MouseButton1Click:Connect(function()
         MainFrame.Visible = false
     else
         MainFrame.Visible = true
-        MainFrame.Size = UDim2.new(0, 500, 0, 0)
-        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 500, 0, 350)}):Play()
+        MainFrame.Size = UDim2.new(0, 550, 0, 0) -- Hiệu ứng mở
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 550, 0, 280)}):Play()
     end
 end)
 
@@ -133,30 +126,30 @@ end
 MakeDraggable(MainFrame)
 MakeDraggable(OpenButton)
 
--- /// 9. KHU VỰC CHỨA NÚT (ĐÃ CHỈNH LẠI VỊ TRÍ SAU DÒNG KẺ) ///
+-- /// 9. KHU VỰC CHỨA NÚT (ĐIỀU CHỈNH THEO SIZE MỚI) ///
 local ButtonContainer = Instance.new("ScrollingFrame")
 ButtonContainer.Parent = MainFrame
 ButtonContainer.Active = true
 ButtonContainer.BackgroundColor3 = Theme.Background
 ButtonContainer.BackgroundTransparency = 1
 ButtonContainer.BorderSizePixel = 0
--- [THAY ĐỔI] Hạ thấp xuống Y=80 (dưới dòng kẻ)
-ButtonContainer.Position = UDim2.new(0, 15, 0, 80)
--- [THAY ĐỔI] Chiều rộng giảm theo MainFrame (500 - 30 = 470)
-ButtonContainer.Size = UDim2.new(0, 470, 0, 260)
+ButtonContainer.Position = UDim2.new(0, 15, 0, 50) 
+-- [THAY ĐỔI] Chiều cao giảm xuống còn 220 để vừa khung 280
+-- Chiều rộng tăng lên 520 để vừa khung 550
+ButtonContainer.Size = UDim2.new(0, 520, 0, 220) 
 ButtonContainer.ScrollBarThickness = 4
 ButtonContainer.ScrollBarImageColor3 = Theme.YellowBorder
 
 local UIListLayout = Instance.new("UIListLayout"); UIListLayout.Parent = ButtonContainer; UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder; UIListLayout.Padding = UDim.new(0, 8)
 local UIPadding = Instance.new("UIPadding"); UIPadding.Parent = ButtonContainer; UIPadding.PaddingTop = UDim.new(0, 5); UIPadding.PaddingLeft = UDim.new(0, 5)
 
--- Hàm tạo nút (Tự động chỉnh độ rộng)
+-- Hàm tạo nút
 local function CreateButton(text, callback)
     local Button = Instance.new("TextButton")
     Button.Parent = ButtonContainer
     Button.BackgroundColor3 = Theme.Button
-    -- [THAY ĐỔI] Nút nhỏ lại vừa khung (440px)
-    Button.Size = UDim2.new(0, 440, 0, 40) 
+    -- [THAY ĐỔI] Nút dài ra 490px cho cân đối
+    Button.Size = UDim2.new(0, 490, 0, 40) 
     Button.Font = Enum.Font.GothamBold
     Button.Text = text
     Button.TextColor3 = Theme.Text
@@ -166,14 +159,16 @@ local function CreateButton(text, callback)
     local BtnStroke = Instance.new("UIStroke"); BtnStroke.Color = Theme.YellowBorder; BtnStroke.Thickness = 1; BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; BtnStroke.Parent = Button
 
     Button.MouseButton1Click:Connect(function()
-        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 420, 0, 35)}):Play()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 470, 0, 35)}):Play()
         task.wait(0.1)
-        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 440, 0, 40)}):Play()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 490, 0, 40)}):Play()
         callback()
     end)
 end
 
--- /// VÍ DỤ CÁC CHỨC NĂNG ///
+-- /// VÍ DỤ CHỨC NĂNG ///
 CreateButton("Auto Farm Level 🍌", function() print("Farm") end)
 CreateButton("Auto Farm Chest", function() print("Chest") end)
 CreateButton("Teleport Sea 3", function() print("TP") end)
+CreateButton("ESP Player", function() print("ESP") end)
+CreateButton("Walkspeed 200", function() print("Speed") end)
