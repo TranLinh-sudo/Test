@@ -1,96 +1,65 @@
 -- /////////////////////////////////////////////////////////////
--- /// BANANA CAT HUB - FIX ERROR VERSION (SAFE MODE) ///
+-- /// BANANA CAT HUB - FINAL FULL VERSION ///
 -- /////////////////////////////////////////////////////////////
 
--- 1. KIỂM TRA MÔI TRƯỜNG
-if not game:IsLoaded() then game.Loaded:Wait() end
+repeat task.wait() until game:IsLoaded()
 
--- 2. KHỞI TẠO DỊCH VỤ
+-- 1. DỊCH VỤ & ANTI-AFK
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
+local VirtualUser = game:GetService("VirtualUser")
 
--- 3. CẤU HÌNH GIAO DIỆN
+-- Anti-AFK
+Players.LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- 2. CẤU HÌNH THEME
 local Theme = {
-    Background = Color3.fromRGB(30, 30, 30),
+    Background = Color3.fromRGB(25, 25, 25),
     YellowBorder = Color3.fromRGB(255, 235, 59),
     Text = Color3.fromRGB(255, 255, 255),
-    Button = Color3.fromRGB(50, 50, 50),
-    SelectedTab = Color3.fromRGB(80, 80, 80),
-    Red = Color3.fromRGB(255, 85, 85),
+    Button = Color3.fromRGB(45, 45, 45),
+    Red = Color3.fromRGB(255, 80, 80),
+    Green = Color3.fromRGB(80, 255, 100),
     Orange = Color3.fromRGB(255, 170, 0),
-    Green = Color3.fromRGB(85, 255, 127),
     BananaCatImage = "http://www.roblox.com/asset/?id=13693437997"
 }
 
--- 4. XỬ LÝ PARENT (FIX LỖI KHÔNG HIỆN GUI)
--- Phần này quan trọng nhất: Tự động tìm nơi an toàn để hiện GUI
-local GUI_NAME = "BananaCatHub_Fixed"
+-- 3. XỬ LÝ GUI AN TOÀN (Safe GUI Load)
+local GUI_NAME = "BananaCatHub_Final"
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local ParentTarget = nil
 
--- Thử dùng CoreGui (Ưu tiên)
-local success, result = pcall(function()
-    return CoreGui
-end)
+local success, result = pcall(function() return CoreGui end)
+if success then ParentTarget = result else ParentTarget = PlayerGui end
 
-if success then
-    ParentTarget = result
-else
-    -- Nếu thất bại (trên Mobile Executor), dùng PlayerGui
-    ParentTarget = PlayerGui
-end
+if ParentTarget:FindFirstChild(GUI_NAME) then ParentTarget[GUI_NAME]:Destroy() end
+if PlayerGui:FindFirstChild(GUI_NAME) then PlayerGui[GUI_NAME]:Destroy() end
 
--- Xóa GUI cũ để không bị chồng lấp
-if ParentTarget:FindFirstChild(GUI_NAME) then
-    ParentTarget[GUI_NAME]:Destroy()
-end
-if PlayerGui:FindFirstChild(GUI_NAME) then -- Kiểm tra kỹ cả 2 nơi
-    PlayerGui[GUI_NAME]:Destroy()
-end
-
--- Tạo ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = GUI_NAME
 ScreenGui.Parent = ParentTarget
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.ResetOnSpawn = false -- Chết không bị mất GUI
-getgenv().BananaHub = ScreenGui -- Lưu vào biến toàn cục
-
-print("GUI is loading on parent: " .. tostring(ParentTarget)) -- In ra để debug
+ScreenGui.ResetOnSpawn = false 
 
 -- /////////////////////////////////////////////////////////////
--- /// BẮT ĐẦU XÂY DỰNG GIAO DIỆN ///
+-- /// GIAO DIỆN CHÍNH ///
 -- /////////////////////////////////////////////////////////////
 
--- NÚT ICON TRÒN
-local OpenButton = Instance.new("ImageButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Parent = ScreenGui
-OpenButton.BackgroundColor3 = Theme.Background 
-OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-OpenButton.Size = UDim2.new(0, 45, 0, 45) 
-OpenButton.Image = Theme.BananaCatImage
-OpenButton.Visible = true
-OpenButton.BackgroundTransparency = 0.2
+-- ICON MỞ (TOGGLE)
+local OpenButton = Instance.new("ImageButton"); OpenButton.Parent = ScreenGui; OpenButton.BackgroundColor3 = Theme.Background; OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0); OpenButton.Size = UDim2.new(0, 45, 0, 45); OpenButton.Image = Theme.BananaCatImage; OpenButton.BackgroundTransparency = 0.2
 local OpenCorner = Instance.new("UICorner"); OpenCorner.CornerRadius = UDim.new(1, 0); OpenCorner.Parent = OpenButton
 local OpenStroke = Instance.new("UIStroke"); OpenStroke.Color = Theme.YellowBorder; OpenStroke.Thickness = 2; OpenStroke.Parent = OpenButton
 
--- KHUNG CHÍNH
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Theme.Background
-MainFrame.BackgroundTransparency = 0.6
-MainFrame.Size = UDim2.new(0, 550, 0, 280)
-MainFrame.Position = UDim2.new(0.5, -275, 0.5, -140)
-MainFrame.ClipsDescendants = true
-MainFrame.Visible = true 
-
+-- KHUNG MENU
+local MainFrame = Instance.new("Frame"); MainFrame.Parent = ScreenGui; MainFrame.BackgroundColor3 = Theme.Background; MainFrame.BackgroundTransparency = 0.5; MainFrame.Size = UDim2.new(0, 550, 0, 280); MainFrame.Position = UDim2.new(0.5, -275, 0.5, -140); MainFrame.ClipsDescendants = true; MainFrame.Visible = true
 local UICorner = Instance.new("UICorner"); UICorner.CornerRadius = UDim.new(0, 10); UICorner.Parent = MainFrame
 local UIStroke = Instance.new("UIStroke"); UIStroke.Color = Theme.YellowBorder; UIStroke.Thickness = 3; UIStroke.Parent = MainFrame
 
@@ -99,7 +68,7 @@ local Logo = Instance.new("ImageLabel"); Logo.Parent = MainFrame; Logo.Backgroun
 local Title = Instance.new("TextLabel"); Title.Parent = MainFrame; Title.BackgroundTransparency = 1; Title.Position = UDim2.new(0, 28, 0, 3); Title.Size = UDim2.new(0, 200, 0, 18); Title.Font = Enum.Font.FredokaOne; Title.Text = "Banana Cat Hub"; Title.TextColor3 = Theme.YellowBorder; Title.TextSize = 14; Title.TextXAlignment = Enum.TextXAlignment.Left
 local Separator = Instance.new("Frame"); Separator.Parent = MainFrame; Separator.BackgroundColor3 = Theme.YellowBorder; Separator.BorderSizePixel = 0; Separator.Position = UDim2.new(0, 0, 0, 25); Separator.Size = UDim2.new(1, 0, 0, 2)
 
--- NÚT ĐIỀU KHIỂN
+-- CONTROLS (Nút X và -)
 local CloseButton = Instance.new("TextButton"); CloseButton.Parent = MainFrame; CloseButton.BackgroundColor3 = Theme.Red; CloseButton.Position = UDim2.new(1, -22, 0, 4); CloseButton.Size = UDim2.new(0, 18, 0, 18); CloseButton.Font = Enum.Font.FredokaOne; CloseButton.Text = "X"; CloseButton.TextColor3 = Color3.new(1,1,1); CloseButton.TextSize = 12; local CloseCorner = Instance.new("UICorner"); CloseCorner.CornerRadius = UDim.new(0, 4); CloseCorner.Parent = CloseButton
 local MinimizeButton = Instance.new("TextButton"); MinimizeButton.Parent = MainFrame; MinimizeButton.BackgroundColor3 = Theme.Orange; MinimizeButton.Position = UDim2.new(1, -44, 0, 4); MinimizeButton.Size = UDim2.new(0, 18, 0, 18); MinimizeButton.Font = Enum.Font.FredokaOne; MinimizeButton.Text = "-"; MinimizeButton.TextColor3 = Color3.new(1,1,1); MinimizeButton.TextSize = 14; local MinCorner = Instance.new("UICorner"); MinCorner.CornerRadius = UDim.new(0, 4); MinCorner.Parent = MinimizeButton
 
@@ -132,25 +101,18 @@ local function CreateTab(TabName)
     return Page
 end
 
--- 14 TAB
-local Tab1 = CreateTab("Trạng thái")
-local Tab2 = CreateTab("Máy chủ")
-local Tab3 = CreateTab("Chung")
-local Tab4 = CreateTab("Biển")
-local Tab5 = CreateTab("Vật phẩm")
-local Tab6 = CreateTab("Trái & Raid")
-local Tab7 = CreateTab("Di chuyển")
-local Tab8 = CreateTab("Cửa hàng")
-local Tab9 = CreateTab("Tộc v4")
-local Tab10 = CreateTab("Leviathan")
-local Tab11 = CreateTab("Núi lửa")
-local Tab12 = CreateTab("Đảo cáo")
-local Tab13 = CreateTab("Định vị")
-local Tab14 = CreateTab("Cài đặt")
+-- HÀM TẠO NÚT
+local function AddButton(Page, Text, Callback)
+    local Button = Instance.new("TextButton"); Button.Parent = Page; Button.BackgroundColor3 = Theme.Button; Button.Size = UDim2.new(1, -10, 0, 30); Button.Font = Enum.Font.GothamBold; Button.Text = Text; Button.TextColor3 = Theme.Text; Button.TextSize = 14; local BCorner = Instance.new("UICorner"); BCorner.CornerRadius = UDim.new(0, 6); BCorner.Parent = Button; local BStroke = Instance.new("UIStroke"); BStroke.Color = Theme.YellowBorder; BStroke.Thickness = 1; BStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; BStroke.Parent = Button
+    Button.MouseButton1Click:Connect(function() TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(1, -20, 0, 28)}):Play(); task.wait(0.1); TweenService:Create(Button, TweenInfo.new(1, -10, 0, 30)}):Play(); Callback() end)
+end
+
+-- TẠO 14 TAB
+local Tab1 = CreateTab("Trạng thái"); local Tab2 = CreateTab("Máy chủ"); local Tab3 = CreateTab("Chung"); local Tab4 = CreateTab("Biển"); local Tab5 = CreateTab("Vật phẩm"); local Tab6 = CreateTab("Trái & Raid"); local Tab7 = CreateTab("Di chuyển"); local Tab8 = CreateTab("Cửa hàng"); local Tab9 = CreateTab("Tộc v4"); local Tab10 = CreateTab("Leviathan"); local Tab11 = CreateTab("Núi lửa"); local Tab12 = CreateTab("Đảo cáo"); local Tab13 = CreateTab("Định vị"); local Tab14 = CreateTab("Cài đặt")
 
 if FirstTab then FirstTab.Button.BackgroundColor3 = Theme.YellowBorder; FirstTab.Button.TextColor3 = Color3.new(0,0,0); FirstTab.Page.Visible = true end
 
--- KÉO THẢ
+-- KÉO THẢ GUI
 local function MakeDraggable(object)
     local dragging, dragInput, dragStart, startPos
     object.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; dragStart = input.Position; startPos = object.Position; input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end) end end)
@@ -160,19 +122,20 @@ end
 MakeDraggable(MainFrame); MakeDraggable(OpenButton)
 
 -- /////////////////////////////////////////////////////////////
--- /// LOGIC TAB 1: STATUS ///
+-- /// LOGIC TAB 1: STATUS CAO CẤP (SERVER & PLAYER) ///
 -- /////////////////////////////////////////////////////////////
 
 local function CreateInfoLabel(Parent, Title)
     local Frame = Instance.new("Frame"); Frame.Parent = Parent; Frame.BackgroundTransparency = 1; Frame.Size = UDim2.new(1, -10, 0, 20)
-    local TitleLabel = Instance.new("TextLabel"); TitleLabel.Parent = Frame; TitleLabel.BackgroundTransparency = 1; TitleLabel.Position = UDim2.new(0, 0, 0, 0); TitleLabel.Size = UDim2.new(0.6, 0, 1, 0); TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.Text = Title; TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 200); TitleLabel.TextSize = 13; TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    local ValueLabel = Instance.new("TextLabel"); ValueLabel.Parent = Frame; ValueLabel.BackgroundTransparency = 1; ValueLabel.Position = UDim2.new(0.6, 0, 0, 0); ValueLabel.Size = UDim2.new(0.4, 0, 1, 0); ValueLabel.Font = Enum.Font.GothamBold; ValueLabel.Text = "..."; ValueLabel.TextColor3 = Theme.YellowBorder; ValueLabel.TextSize = 13; ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    local TitleLabel = Instance.new("TextLabel"); TitleLabel.Parent = Frame; TitleLabel.BackgroundTransparency = 1; TitleLabel.Position = UDim2.new(0, 0, 0, 0); TitleLabel.Size = UDim2.new(0.5, 0, 1, 0); TitleLabel.Font = Enum.Font.GothamBold; TitleLabel.Text = Title; TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 200); TitleLabel.TextSize = 13; TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local ValueLabel = Instance.new("TextLabel"); ValueLabel.Parent = Frame; ValueLabel.BackgroundTransparency = 1; ValueLabel.Position = UDim2.new(0.5, 0, 0, 0); ValueLabel.Size = UDim2.new(0.5, 0, 1, 0); ValueLabel.Font = Enum.Font.GothamBold; ValueLabel.Text = "Loading..."; ValueLabel.TextColor3 = Theme.YellowBorder; ValueLabel.TextSize = 13; ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
     return ValueLabel
 end
 local function CreateHeader(Parent, Text)
     local Label = Instance.new("TextLabel"); Label.Parent = Parent; Label.BackgroundTransparency = 1; Label.Size = UDim2.new(1, 0, 0, 25); Label.Font = Enum.Font.FredokaOne; Label.Text = "--- " .. Text .. " ---"; Label.TextColor3 = Theme.Text; Label.TextSize = 16
 end
 
+-- TẠO DANH SÁCH THÔNG TIN
 CreateHeader(Tab1, "THÔNG TIN NHÂN VẬT")
 local Lb_Name = CreateInfoLabel(Tab1, "Tên nhân vật:")
 local Lb_Level = CreateInfoLabel(Tab1, "Cấp độ:")
@@ -189,37 +152,70 @@ local Lb_Mirage = CreateInfoLabel(Tab1, "Mirage Island:")
 local Lb_Kitsune = CreateInfoLabel(Tab1, "Kitsune Island:")
 local Lb_Dragon = CreateInfoLabel(Tab1, "Prehistoric Island:")
 local Lb_Frozen = CreateInfoLabel(Tab1, "Frozen Dimension:")
-local Lb_DimKill = CreateInfoLabel(Tab1, "Dimension Killed:")
-local Lb_Tyrant = CreateInfoLabel(Tab1, "Tyrant of the Skies:")
+local Lb_DimKill = CreateInfoLabel(Tab1, "Dough King Kills:")
+local Lb_Tyrant = CreateInfoLabel(Tab1, "Tyrant of Skies:")
 local Lb_Indra = CreateInfoLabel(Tab1, "Rip_Indra:")
 local Lb_Elite = CreateInfoLabel(Tab1, "Elite Hunter:")
 local Lb_Pulever = CreateInfoLabel(Tab1, "Pulever:")
 local Lb_Sword = CreateInfoLabel(Tab1, "Legendary Sword:")
 
+-- HÀM LOGIC PHỤ
+local function GetMoonStatus()
+    local Phase = Lighting:GetMoonPhase()
+    if Phase == Enum.MoonPhase.Full then return "✅ ĐANG CÓ (100%)", Theme.Green
+    elseif Phase == Enum.MoonPhase.WaxingGibbous then return "⏳ Còn 1 ngày", Theme.Orange
+    elseif Phase == Enum.MoonPhase.FirstQuarter then return "⏳ Còn 2 ngày", Theme.Orange
+    elseif Phase == Enum.MoonPhase.WaxingCrescent then return "⏳ Còn 3 ngày", Theme.Orange
+    elseif Phase == Enum.MoonPhase.New then return "🌑 Trăng non", Theme.Red
+    else return "❌ Đã qua", Theme.Red end
+end
+
+local function GetDoughKingCount()
+    local CounterFrame = workspace.Map:FindFirstChild("Cake Loaf")
+    if CounterFrame and CounterFrame:FindFirstChild("Frames") and CounterFrame.Frames:FindFirstChild("Counter") then
+        local Text = CounterFrame.Frames.Counter.TextLabel.Text
+        local Count = tonumber(string.match(Text, "%d+"))
+        if Count then return "Đã giết: " .. Count .. " (Còn " .. (500 - Count) .. ")", Theme.YellowBorder end
+    end
+    return "N/A (Cần Sea 3)", Theme.Red
+end
+
+-- VÒNG LẶP UPDATE (1 GIÂY 1 LẦN)
 task.spawn(function()
-    while task.wait(1) do
+    while true do
+        task.wait(1)
         pcall(function()
-            local Plr = game.Players.LocalPlayer
-            local Data = Plr:FindFirstChild("Data")
-            
-            -- Update Info
+            local Plr = Players.LocalPlayer
+            -- 1. Player Info
             Lb_Name.Text = Plr.DisplayName
-            if Data then
-                Lb_Level.Text = tostring(Data.Level.Value)
-                Lb_Frag.Text = tostring(Data.Fragments.Value)
-                Lb_Race.Text = tostring(Data.Race.Value)
-                Lb_Fruit.Text = tostring(Data.DevilFruit.Value)
+            if Plr:FindFirstChild("Data") then
+                local D = Plr.Data
+                if D:FindFirstChild("Level") then Lb_Level.Text = tostring(D.Level.Value) end
+                if D:FindFirstChild("Fragments") then Lb_Frag.Text = tostring(D.Fragments.Value) end
+                if D:FindFirstChild("Race") then Lb_Race.Text = tostring(D.Race.Value) end
+                if D:FindFirstChild("DevilFruit") then Lb_Fruit.Text = tostring(D.DevilFruit.Value) end
             end
             if Plr:FindFirstChild("leaderstats") and Plr.leaderstats:FindFirstChild("Beli") then
                  Lb_Beli.Text = "$" .. Plr.leaderstats.Beli.Value
             end
 
-            -- Update Server Status
-            if Lighting:GetMoonPhase() == Enum.MoonPhase.Full then Lb_Moon.Text = "✅ Có"; Lb_Moon.TextColor3 = Theme.Green else Lb_Moon.Text = "❌ Không"; Lb_Moon.TextColor3 = Theme.Red end
-            if workspace._WorldOrigin.Locations:FindFirstChild("Mirage Island") then Lb_Mirage.Text = "✅ Đã Spawn"; Lb_Mirage.TextColor3 = Theme.Green else Lb_Mirage.Text = "❌ Chưa có"; Lb_Mirage.TextColor3 = Theme.Red end
-            if workspace.Map:FindFirstChild("Kitsune Island") then Lb_Kitsune.Text = "✅ Đã Spawn"; Lb_Kitsune.TextColor3 = Theme.Green else Lb_Kitsune.Text = "❌ Chưa có"; Lb_Kitsune.TextColor3 = Theme.Red end
-            if workspace.Enemies:FindFirstChild("rip_indra True Form") then Lb_Indra.Text = "⚔️ Đang đánh"; Lb_Indra.TextColor3 = Theme.Green else Lb_Indra.Text = "❌ Chưa có"; Lb_Indra.TextColor3 = Theme.Red end
+            -- 2. Server Status
+            local MoonText, MoonColor = GetMoonStatus()
+            Lb_Moon.Text = MoonText; Lb_Moon.TextColor3 = MoonColor
 
+            if workspace._WorldOrigin.Locations:FindFirstChild("Mirage Island") then Lb_Mirage.Text = "✅ ĐÃ XUẤT HIỆN"; Lb_Mirage.TextColor3 = Theme.Green else Lb_Mirage.Text = "❌ Chưa có"; Lb_Mirage.TextColor3 = Theme.Red end
+            if workspace.Map:FindFirstChild("Kitsune Island") then Lb_Kitsune.Text = "✅ ĐÃ XUẤT HIỆN"; Lb_Kitsune.TextColor3 = Theme.Green else Lb_Kitsune.Text = "❌ Chưa có"; Lb_Kitsune.TextColor3 = Theme.Red end
+            if workspace.Map:FindFirstChild("Frozen Dimension") then Lb_Frozen.Text = "✅ Cổng Mở"; Lb_Frozen.TextColor3 = Theme.Green else Lb_Frozen.Text = "❌ Đóng"; Lb_Frozen.TextColor3 = Theme.Red end
+            
+            local DoughText, DoughColor = GetDoughKingCount()
+            Lb_DimKill.Text = DoughText; Lb_DimKill.TextColor3 = DoughColor
+
+            if workspace.Enemies:FindFirstChild("rip_indra True Form") then Lb_Indra.Text = "⚔️ ĐANG ĐÁNH"; Lb_Indra.TextColor3 = Theme.Green else Lb_Indra.Text = "❌ Chưa có"; Lb_Indra.TextColor3 = Theme.Red end
+            
+            -- Checks cơ bản cho các Boss khác
+            Lb_Dragon.Text = "Checking..."
+            if workspace.Enemies:FindFirstChild("Tyrant of the Skies") then Lb_Tyrant.Text = "✅ Đang sống"; Lb_Tyrant.TextColor3 = Theme.Green else Lb_Tyrant.Text = "❌ Chưa Spawn"; Lb_Tyrant.TextColor3 = Theme.Red end
+            
             local EliteFound = false
             for _, v in pairs(workspace.Enemies:GetChildren()) do
                 if v.Name == "Deandre" or v.Name == "Diablo" or v.Name == "Urban" then
@@ -228,11 +224,19 @@ task.spawn(function()
             end
             if not EliteFound then Lb_Elite.Text = "❌ Chưa có"; Lb_Elite.TextColor3 = Theme.Red end
             
-            Lb_Dragon.Text = "Checking..."; Lb_Frozen.Text = "Checking..."
-            Lb_DimKill.Text = "Checking..."; Lb_Tyrant.Text = "Checking..."
-            Lb_Pulever.Text = "Checking..."; Lb_Sword.Text = "Checking..."
+            if workspace:FindFirstChild("Legendary Sword Dealer") then Lb_Sword.Text = "✅ Đang bán"; Lb_Sword.TextColor3 = Theme.Green else Lb_Sword.Text = "❌ Vắng mặt"; Lb_Sword.TextColor3 = Theme.Red end
+            Lb_Pulever.Text = "Checking..."
         end)
     end
 end)
 
-print("Banana Cat Hub Loaded Successfully!")
+-- /////////////////////////////////////////////////////////////
+-- /// PLACEHOLDERS (Các Tab khác) ///
+-- /////////////////////////////////////////////////////////////
+AddButton(Tab2, "Server Hop (Coming Soon)", function() print("Hop") end)
+AddButton(Tab3, "Auto Farm Level (Beta)", function() print("Farm") end)
+AddButton(Tab7, "Teleport Sea 1", function() print("TP 1") end)
+AddButton(Tab7, "Teleport Sea 2", function() print("TP 2") end)
+AddButton(Tab7, "Teleport Sea 3", function() print("TP 3") end)
+
+print("Banana Cat Hub Final Loaded!")
