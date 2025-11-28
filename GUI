@@ -4,7 +4,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- Hàm tạo UI (Bảo vệ UI trong CoreGui nếu dùng Executor, hoặc PlayerGui nếu dùng Studio)
+-- Hàm bảo vệ UI
 local function getParent()
 	local success, result = pcall(function()
 		return CoreGui
@@ -16,98 +16,153 @@ local function getParent()
 	end
 end
 
--- --- CẤU HÌNH MÀU SẮC (GIỐNG ẢNH) ---
+-- --- CẤU HÌNH MÀU SẮC ---
 local Colors = {
-	Background = Color3.fromRGB(20, 20, 20), -- Màu nền tối
-	Sidebar = Color3.fromRGB(15, 15, 15),    -- Màu thanh bên
-	ItemBG = Color3.fromRGB(30, 30, 30),     -- Màu nền của các mục chức năng
-	Text = Color3.fromRGB(255, 255, 255),    -- Màu chữ trắng
-	Accent = Color3.fromRGB(255, 215, 0),    -- Màu vàng (Gold) giống nút "Click" và tiêu đề
-	Placeholder = Color3.fromRGB(150, 150, 150)
+	Background = Color3.fromRGB(20, 20, 20),
+	Sidebar = Color3.fromRGB(15, 15, 15),
+	ItemBG = Color3.fromRGB(30, 30, 30),
+	Text = Color3.fromRGB(255, 255, 255),
+	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng
+	Close = Color3.fromRGB(200, 50, 50),  -- Màu đỏ cho nút X
 }
 
--- --- HÀM TẠO GIAO DIỆN CHÍNH ---
+-- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_Replica"
+ScreenGui.Name = "BananaCatHub_V2"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- 1. Main Frame (Khung chính)
+-- 1. NÚT MỞ MENU (ICON TOGGLE)
+-- Nút này hiện khi ẩn script, bấm vào để mở lại
+local OpenButton = Instance.new("ImageButton")
+OpenButton.Name = "OpenButton"
+OpenButton.Parent = ScreenGui
+OpenButton.BackgroundColor3 = Colors.Background
+OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0) -- Vị trí góc trên trái
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Visible = false -- Mặc định ẩn vì Menu đang mở
+OpenButton.Image = "rbxassetid://13693489228" -- ID ảnh Banana Cat (Hoặc thay ảnh khác)
+
+local OpenBtnCorner = Instance.new("UICorner")
+OpenBtnCorner.CornerRadius = UDim.new(1, 0) -- Bo tròn thành hình tròn
+OpenBtnCorner.Parent = OpenButton
+
+local OpenStroke = Instance.new("UIStroke") -- Viền vàng cho nút mở
+OpenStroke.Parent = OpenButton
+OpenStroke.Color = Colors.Accent
+OpenStroke.Thickness = 2
+
+-- 2. KHUNG CHÍNH (MAIN FRAME) - CHIẾM 75% MÀN HÌNH
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Colors.Background
-MainFrame.BackgroundTransparency = 0.1 -- Hơi trong suốt giống kính
-MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200) -- Căn giữa màn hình
-MainFrame.Size = UDim2.new(0, 650, 0, 400)
+MainFrame.BackgroundTransparency = 0.1
+-- Căn giữa và chiếm 75%
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) 
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) -- 75% Chiều rộng và Cao
 MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true -- Cắt bớt phần thừa nếu cần
 
--- Bo tròn góc Main Frame
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Tiêu đề (Header)
+-- --- THANH TIÊU ĐỀ & NÚT ĐIỀU KHIỂN ---
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TopBar.BackgroundTransparency = 1
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+
 local HeaderTitle = Instance.new("TextLabel")
-HeaderTitle.Name = "Title"
-HeaderTitle.Parent = MainFrame
+HeaderTitle.Parent = TopBar
 HeaderTitle.BackgroundTransparency = 1
-HeaderTitle.Position = UDim2.new(0, 160, 0, 10) -- Lệch sang phải để tránh Sidebar
-HeaderTitle.Size = UDim2.new(1, -170, 0, 30)
+HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
+HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
 HeaderTitle.Text = "Banana Cat Hub - Blox Fruit"
-HeaderTitle.TextColor3 = Colors.Accent -- Màu vàng
-HeaderTitle.TextSize = 18
-HeaderTitle.TextXAlignment = Enum.TextXAlignment.Center
+HeaderTitle.TextColor3 = Colors.Accent
+HeaderTitle.TextSize = 18 -- Chữ to hơn chút để phù hợp khung lớn
+HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- --- 2. SIDEBAR (THANH BÊN TRÁI) ---
+-- NÚT TẮT (X)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Parent = TopBar
+CloseBtn.BackgroundColor3 = Colors.Close
+CloseBtn.Position = UDim2.new(1, -35, 0.5, -12) -- Góc phải
+CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+-- NÚT ẨN (-)
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.Parent = TopBar
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -12) -- Bên cạnh nút X
+MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 14
+
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 6)
+MinCorner.Parent = MinimizeBtn
+
+-- --- LOGIC CÁC NÚT ---
+-- Logic tắt hoàn toàn
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+-- Logic ẩn script (Thu nhỏ)
+MinimizeBtn.MouseButton1Click:Connect(function()
+	MainFrame.Visible = false
+	OpenButton.Visible = true -- Hiện nút mở
+end)
+
+-- Logic mở script (Từ nút icon)
+OpenButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = true
+	OpenButton.Visible = false -- Ẩn nút mở
+end)
+
+-- --- SIDEBAR (THANH BÊN) ---
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Colors.Sidebar
 Sidebar.BackgroundTransparency = 0.5
-Sidebar.Size = UDim2.new(0, 160, 1, 0)
+Sidebar.Position = UDim2.new(0, 0, 0, 40) -- Nằm dưới TopBar
+Sidebar.Size = UDim2.new(0.25, 0, 1, -40) -- Chiếm 25% chiều ngang khung
 Sidebar.BorderSizePixel = 0
 
-local SidebarCorner = Instance.new("UICorner")
-SidebarCorner.CornerRadius = UDim.new(0, 10)
-SidebarCorner.Parent = Sidebar
+-- --- CONTENT (NỘI DUNG) ---
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Name = "ContentContainer"
+ContentContainer.Parent = MainFrame
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.Position = UDim2.new(0.25, 10, 0, 50) -- Lệch sang phải 25% + padding
+ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
--- Thanh tìm kiếm (Search Bar)
-local SearchFrame = Instance.new("Frame")
-SearchFrame.Name = "SearchFrame"
-SearchFrame.Parent = Sidebar
-SearchFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-SearchFrame.BackgroundTransparency = 0
-SearchFrame.Position = UDim2.new(0, 10, 0, 15)
-SearchFrame.Size = UDim2.new(1, -20, 0, 30)
-
-local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 6)
-SearchCorner.Parent = SearchFrame
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Parent = SearchFrame
-SearchBox.BackgroundTransparency = 1
-SearchBox.Size = UDim2.new(1, -10, 1, 0)
-SearchBox.Position = UDim2.new(0, 10, 0, 0)
-SearchBox.Font = Enum.Font.Gotham
-SearchBox.PlaceholderText = "Search..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Colors.Text
-SearchBox.TextSize = 12
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-
--- Danh sách Tab (ScrollingFrame)
+-- --- HỆ THỐNG TAB & CHỨC NĂNG (GIỮ NGUYÊN LOGIC CŨ) ---
 local TabList = Instance.new("ScrollingFrame")
 TabList.Name = "TabList"
 TabList.Parent = Sidebar
-TabList.Active = true
-TabList.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabList.BackgroundTransparency = 1
-TabList.BorderSizePixel = 0
-TabList.Position = UDim2.new(0, 0, 0, 60)
-TabList.Size = UDim2.new(1, 0, 1, -70)
+TabList.Position = UDim2.new(0, 0, 0, 10)
+TabList.Size = UDim2.new(1, 0, 1, -10)
 TabList.ScrollBarThickness = 2
 
 local TabListLayout = Instance.new("UIListLayout")
@@ -115,80 +170,55 @@ TabListLayout.Parent = TabList
 TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 
--- Container chứa các trang nội dung (Bên phải)
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "ContentContainer"
-ContentContainer.Parent = MainFrame
-ContentContainer.BackgroundTransparency = 1
-ContentContainer.Position = UDim2.new(0, 170, 0, 50)
-ContentContainer.Size = UDim2.new(1, -180, 1, -60)
-
--- --- HÀM HỖ TRỢ TẠO TAB VÀ CHỨC NĂNG ---
-
--- Hàm tạo Tab bên Sidebar
 local currentTab = nil
+
+-- Hàm tạo Tab
 local function CreateTab(name)
-	-- Tạo trang nội dung cho Tab này
 	local Page = Instance.new("ScrollingFrame")
 	Page.Name = name .. "_Page"
 	Page.Parent = ContentContainer
 	Page.BackgroundTransparency = 1
 	Page.Size = UDim2.new(1, 0, 1, 0)
 	Page.ScrollBarThickness = 4
-	Page.Visible = false -- Mặc định ẩn
+	Page.Visible = false
 	
 	local PageLayout = Instance.new("UIListLayout")
 	PageLayout.Parent = Page
 	PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	PageLayout.Padding = UDim.new(0, 8)
 
-	-- Tạo nút bấm bên Sidebar
 	local TabButton = Instance.new("TextButton")
-	TabButton.Name = name
 	TabButton.Parent = TabList
-	TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	TabButton.BackgroundTransparency = 1
-	TabButton.Size = UDim2.new(1, 0, 0, 30)
+	TabButton.Size = UDim2.new(1, 0, 0, 35)
 	TabButton.Font = Enum.Font.GothamBold
-	TabButton.Text = "   " .. name -- Thêm khoảng trắng để thụt lề
+	TabButton.Text = "   " .. name
 	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
-	TabButton.TextSize = 13
+	TabButton.TextSize = 12
 	TabButton.TextXAlignment = Enum.TextXAlignment.Left
 
-	-- Xử lý sự kiện bấm Tab
 	TabButton.MouseButton1Click:Connect(function()
-		-- Reset màu các tab cũ
 		for _, child in pairs(TabList:GetChildren()) do
-			if child:IsA("TextButton") then
-				child.TextColor3 = Color3.fromRGB(150, 150, 150)
-			end
+			if child:IsA("TextButton") then child.TextColor3 = Color3.fromRGB(150, 150, 150) end
 		end
-		-- Ẩn tất cả các trang
 		for _, child in pairs(ContentContainer:GetChildren()) do
-			if child:IsA("ScrollingFrame") then
-				child.Visible = false
-			end
+			if child:IsA("ScrollingFrame") then child.Visible = false end
 		end
-		
-		-- Active tab hiện tại
 		TabButton.TextColor3 = Colors.Accent
 		Page.Visible = true
 	end)
 
-	-- Chọn Tab đầu tiên làm mặc định
 	if currentTab == nil then
 		currentTab = Page
 		Page.Visible = true
 		TabButton.TextColor3 = Colors.Accent
 	end
-
 	return Page
 end
 
--- Hàm tạo Chức năng (Nút bấm giống ảnh: Tên trái, Nút phải)
+-- Hàm tạo Nút chức năng
 local function CreateItem(parentPage, text, callback)
 	local ItemFrame = Instance.new("Frame")
-	ItemFrame.Name = "Item"
 	ItemFrame.Parent = parentPage
 	ItemFrame.BackgroundColor3 = Colors.ItemBG
 	ItemFrame.BackgroundTransparency = 0.5
@@ -198,31 +228,29 @@ local function CreateItem(parentPage, text, callback)
 	ItemCorner.CornerRadius = UDim.new(0, 6)
 	ItemCorner.Parent = ItemFrame
 	
-	-- Tên chức năng
 	local ItemLabel = Instance.new("TextLabel")
 	ItemLabel.Parent = ItemFrame
 	ItemLabel.BackgroundTransparency = 1
 	ItemLabel.Position = UDim2.new(0, 15, 0, 0)
-	ItemLabel.Size = UDim2.new(0, 200, 1, 0)
+	ItemLabel.Size = UDim2.new(0.6, 0, 1, 0)
 	ItemLabel.Font = Enum.Font.GothamSemibold
 	ItemLabel.Text = text
 	ItemLabel.TextColor3 = Colors.Text
 	ItemLabel.TextSize = 13
 	ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
 	
-	-- Nút "Click" màu vàng
 	local ActionButton = Instance.new("TextButton")
 	ActionButton.Parent = ItemFrame
-	ActionButton.BackgroundColor3 = Colors.Accent -- Màu vàng
-	ActionButton.Position = UDim2.new(1, -90, 0.5, -12) -- Căn phải
+	ActionButton.BackgroundColor3 = Colors.Accent
+	ActionButton.Position = UDim2.new(1, -90, 0.5, -12)
 	ActionButton.Size = UDim2.new(0, 80, 0, 24)
 	ActionButton.Font = Enum.Font.GothamBold
 	ActionButton.Text = "Click"
-	ActionButton.TextColor3 = Color3.fromRGB(0, 0, 0) -- Chữ đen trên nền vàng
+	ActionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 	ActionButton.TextSize = 12
 	
 	local BtnCorner = Instance.new("UICorner")
-	BtnCorner.CornerRadius = UDim.new(0, 12) -- Bo tròn hình viên thuốc
+	BtnCorner.CornerRadius = UDim.new(0, 12)
 	BtnCorner.Parent = ActionButton
 	
 	ActionButton.MouseButton1Click:Connect(function()
@@ -230,45 +258,15 @@ local function CreateItem(parentPage, text, callback)
 	end)
 end
 
--- --- THÊM DỮ LIỆU GIỐNG ẢNH ---
+-- --- THÊM CÁC TAB VÍ DỤ ---
+local Tab1 = CreateTab("Misc Shop")
+local Tab2 = CreateTab("Auto Farm")
 
--- Tạo các Tab
-local Tab_Misc = CreateTab("Misc Shop") -- Đổi tên tab đầu tiên cho giống ảnh
-local Tab_Running = CreateTab("Running Other")
-local Tab_Fruit = CreateTab("Fruit and Raid")
-local Tab_Sea = CreateTab("Sea Event")
-local Tab_Race = CreateTab("Upgrade Race")
-local Tab_Items = CreateTab("Get and Upgrade Items")
-local Tab_Volcano = CreateTab("Volcano Event")
-local Tab_ESP = CreateTab("ESP")
+CreateItem(Tab1, "Redeem Code", function() print("Redeemed") end)
+CreateItem(Tab1, "Teleport Old World", function() print("TP Old World") end)
+CreateItem(Tab2, "Auto Farm Level", function() print("Farming...") end)
 
--- Tạo nội dung cho Tab "Misc Shop" (Giống ảnh)
-CreateItem(Tab_Misc, "Redeem Code", function()
-	print("Đã bấm Redeem Code")
-	-- Code xử lý logic của bạn ở đây
-end)
-
-CreateItem(Tab_Misc, "Teleport Old World", function()
-	print("Teleport Old World")
-end)
-
-CreateItem(Tab_Misc, "Teleport New World", function()
-	print("Teleport New World")
-end)
-
-CreateItem(Tab_Misc, "Teleport Third Sea", function()
-	print("Teleport Third Sea")
-end)
-
-CreateItem(Tab_Misc, "Buy Dual Flintlock", function()
-	print("Buy Dual Flintlock")
-end)
-
-CreateItem(Tab_Misc, "Reroll Race", function()
-	print("Reroll Race")
-end)
-
--- --- CHỨC NĂNG KÉO THẢ (DRAGGABLE) ---
+-- --- KÉO THẢ CHO MAIN FRAME ---
 local dragging, dragInput, dragStart, startPos
 local function update(input)
 	local delta = input.Position - dragStart
@@ -280,19 +278,37 @@ MainFrame.InputBegan:Connect(function(input)
 		dragging = true
 		dragStart = input.Position
 		startPos = MainFrame.Position
-		
 		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
 		end)
 	end
 end)
 
 MainFrame.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		if dragging then update(input) end
+	end
+end)
+
+-- --- KÉO THẢ CHO NÚT OPEN (ICON) ---
+-- Để bạn di chuyển nút bật mở đi chỗ khác cho đỡ vướng
+local dragBtn, startBtnPos
+OpenButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startBtnPos = OpenButton.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+
+OpenButton.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 		if dragging then
-			update(input)
+			local delta = input.Position - dragStart
+			OpenButton.Position = UDim2.new(startBtnPos.X.Scale, startBtnPos.X.Offset + delta.X, startBtnPos.Y.Scale, startBtnPos.Y.Offset + delta.Y)
 		end
 	end
 end)
