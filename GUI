@@ -15,9 +15,10 @@ _G.Settings = {
 	AutoBone = false,
 	AutoTradeBone = false,
 	AutoSoulReaper = false,
-	Distance = 20, -- Giữ nguyên 20m theo ý bạn
+	Distance = 20, 
 	AutoHaki = true,
-	HitboxSize = 60 -- [MỚI] Kích thước Hitbox để đánh trúng từ xa
+	HitboxSize = 60,
+	FastAttack = false -- [MỚI] Mặc định tắt, bạn phải vào Cài đặt bật lên
 }
 
 -- Hàm bảo vệ UI
@@ -40,7 +41,7 @@ local Colors = {
 
 -- --- TẠO GUI ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_Hitbox_Fix"
+ScreenGui.Name = "BananaCatHub_Final_Settings"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -83,7 +84,7 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Hitbox Expander"
+HeaderTitle.Text = "Banana Cat Hub - Anti Ban"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -328,7 +329,9 @@ local function CreateStatusItem(tabName, labelText, getValueFunc)
 	end)
 end
 
--- --- NỘI DUNG ---
+-- --- NỘI DUNG TỪNG TAB ---
+
+-- TAB 1: TRẠNG THÁI
 CreateStatusItem("Trạng thái", "Tên :", function() return LocalPlayer.DisplayName end)
 CreateStatusItem("Trạng thái", "Tộc :", function() return LocalPlayer.Data.Race.Value end)
 CreateStatusItem("Trạng thái", "Beli :", function() return LocalPlayer.Data.Beli.Value end)
@@ -338,31 +341,72 @@ CreateStatusItem("Trạng thái", "Time :", function()
 	return string.format("%02d:%02d:%02d", math.floor(t/3600), math.floor((t%3600)/60), math.floor(t%60))
 end)
 
+-- TAB 2: FAM
 CreateHeader("Fam", "FAM")
 CreateDropdown("Fam", "Chế độ Fam", {"Melee", "Sword", "Fruit"})
 CreateToggle("Fam", "Auto Farm Level (All Sea)", "AutoFarmLevel")
 CreateToggle("Fam", "Auto Farm Quái Gần", "AutoFarmNear")
-
 CreateHeader("Fam", "XƯƠNG")
 CreateToggle("Fam", "Auto Fam Xương (20m Safe)", "AutoBone")
 CreateToggle("Fam", "Auto Đổi Xương", "AutoTradeBone")
 CreateToggle("Fam", "Auto Soul Reaper", "AutoSoulReaper")
 
--- --- [CORE ENGINE] LOGIC HITBOX & ATTACK ---
+-- TAB 13: CÀI ĐẶT (NỘI DUNG MỚI)
+CreateHeader("Cài đặt", "CẤU HÌNH TẤN CÔNG")
+CreateToggle("Cài đặt", "Fast Attack (20 hit/1s - AntiBan)", "FastAttack")
 
--- 1. [MỚI] HÀM LÀM TO HITBOX QUÁI
+-- --- [CORE ENGINE] LOGIC XỬ LÝ ---
+
+-- 1. [MỚI] LOGIC FAST ATTACK RIÊNG BIỆT (ANTI-BAN)
+spawn(function()
+	while true do
+		-- Chỉ chạy khi bật chức năng Fast Attack trong Cài đặt VÀ đang có chế độ Farm bật
+		if _G.Settings.FastAttack and (_G.Settings.AutoBone or _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear) then
+			-- Chu trình: Đánh 20 lần trong 1 giây (mỗi lần cách nhau 0.05s)
+			for i = 1, 20 do
+				-- Kiểm tra lại nếu tắt giữa chừng thì dừng ngay
+				if not _G.Settings.FastAttack then break end
+				
+				pcall(function()
+					-- Cách 1: Click ảo
+					VirtualUser:CaptureController()
+					VirtualUser:Button1Down(Vector2.new(1280, 672))
+					
+					-- Cách 2: Tool Activate
+					local char = LocalPlayer.Character
+					if char then
+						local tool = char:FindFirstChildOfClass("Tool")
+						if tool then tool:Activate() end
+					end
+					
+					-- Cách 3: Remote Hit
+					ReplicatedStorage.Remotes.CommF_:InvokeServer("LocalClick")
+				end)
+				
+				wait(0.05) -- 0.05 * 20 = 1 giây
+			end
+			
+			-- Nghỉ 1.9 giây để tránh Ban
+			wait(1.9)
+		else
+			wait(0.1) -- Nếu không bật thì nghỉ
+		end
+	end
+end)
+
+
+-- 2. HITBOX EXPANDER (Làm to quái)
 local function ExpandHitbox(enemy)
 	pcall(function()
 		if enemy and enemy:FindFirstChild("HumanoidRootPart") then
-			-- Làm to Hitbox lên 60x60x60
 			enemy.HumanoidRootPart.Size = Vector3.new(_G.Settings.HitboxSize, _G.Settings.HitboxSize, _G.Settings.HitboxSize)
-			enemy.HumanoidRootPart.Transparency = 0.5 -- Để mờ mờ cho bạn thấy nó đã to ra
+			enemy.HumanoidRootPart.Transparency = 0.5 
 			enemy.HumanoidRootPart.CanCollide = false
 		end
 	end)
 end
 
--- 2. AUTO EQUIP
+-- 3. AUTO EQUIP
 local function EquipWeapon()
 	pcall(function()
 		local backpack = LocalPlayer.Backpack
@@ -381,7 +425,7 @@ local function EquipWeapon()
 	end)
 end
 
--- 3. LOGIC DI CHUYỂN
+-- 4. LOGIC DI CHUYỂN (LOCK POS)
 local function LockPosition(targetCFrame)
 	local char = LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -416,7 +460,7 @@ local function IsBoneMob(mobName)
 	return false
 end
 
--- 4. FARM LOOP (KẾT HỢP HITBOX EXPANDER)
+-- 5. VÒNG LẶP FARM CHÍNH
 spawn(function()
 	while true do
 		RunService.RenderStepped:Wait()
@@ -428,25 +472,22 @@ spawn(function()
 				local target = nil
 				local myPos = LocalPlayer.Character.HumanoidRootPart.Position
 				
+				-- Logic chọn mục tiêu
 				for _, enemy in pairs(workspace.Enemies:GetChildren()) do
 					if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-						-- Auto Bone
 						if _G.Settings.AutoBone and IsBoneMob(enemy.Name) then
-							target = enemy
-							break
-						-- Auto Farm Level/Near
+							target = enemy; break
 						elseif (_G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear) and (enemy.HumanoidRootPart.Position - myPos).Magnitude < 1000 then
-							target = enemy
-							break
+							target = enemy; break
 						end
 					end
 				end
 				
 				if target and target:FindFirstChild("HumanoidRootPart") then
-					-- [QUAN TRỌNG] Làm to quái trước khi đánh
+					-- Làm to quái
 					ExpandHitbox(target) 
 					
-					-- Bay yên vị trí
+					-- Bay
 					LockPosition(target.HumanoidRootPart.CFrame)
 					
 					-- Gom quái
@@ -456,7 +497,7 @@ spawn(function()
 								sub.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
 								sub.HumanoidRootPart.CanCollide = false
 								sub.Humanoid.WalkSpeed = 0
-								ExpandHitbox(sub) -- Làm to cả mấy con quái phụ
+								ExpandHitbox(sub)
 							end
 						end
 					end
@@ -468,32 +509,7 @@ spawn(function()
 	end
 end)
 
--- 5. [FIX] TẤN CÔNG ĐA NĂNG
-spawn(function()
-	while true do
-		if _G.Settings.AutoBone or _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear then
-			pcall(function()
-				-- Cách 1: Click ảo
-				VirtualUser:CaptureController()
-				VirtualUser:Button1Down(Vector2.new(1280, 672))
-				
-				-- Cách 2: VirtualInputManager (Mạnh hơn)
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-				VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-				
-				-- Cách 3: Kích hoạt Tool trực tiếp
-				local char = LocalPlayer.Character
-				if char then
-					local tool = char:FindFirstChildOfClass("Tool")
-					if tool then tool:Activate() end
-				end
-			end)
-		end
-		RunService.Heartbeat:Wait()
-	end
-end)
-
--- Auto Haki
+-- AUTO HAKI & TRADE
 spawn(function()
 	while true do
 		wait(5)
@@ -507,7 +523,6 @@ spawn(function()
 	end
 end)
 
--- Auto Trade
 spawn(function()
 	while true do
 		wait(2)
