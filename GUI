@@ -1,7 +1,8 @@
 -- Dịch vụ cần thiết
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
 
 -- Hàm bảo vệ UI
 local function getParent()
@@ -11,7 +12,7 @@ local function getParent()
 	if success then
 		return result
 	else
-		return Players.LocalPlayer:WaitForChild("PlayerGui")
+		return LocalPlayer:WaitForChild("PlayerGui")
 	end
 end
 
@@ -23,65 +24,48 @@ local Colors = {
 	Text = Color3.fromRGB(255, 255, 255),
 	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng
 	Close = Color3.fromRGB(200, 50, 50),
+	Green = Color3.fromRGB(50, 200, 50) -- Màu xanh cho tiền
 }
 
 -- --- DANH SÁCH TÊN TAB ---
 local TabNames = {
-	"Trạng thái",
-	"Fam",
-	"Biển",
-	"item",
-	"trái & tập kích",
-	"cửa hàng",
-	"Di chuyển",
-	"Tộc V4",
-	"Núi lửa",
-	"Đảo LEVI",
-	"Đảo cáo",
-	"PVP",
-	"Cài đặt"
+	"Trạng thái", "Fam", "Biển", "item", "trái & tập kích", 
+	"cửa hàng", "Di chuyển", "Tộc V4", "Núi lửa", 
+	"Đảo LEVI", "Đảo cáo", "PVP", "Cài đặt"
 }
 
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_Final"
+ScreenGui.Name = "BananaCatHub_Status"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- 1. ICON TOGGLE (Luôn hiện)
+-- ICON TOGGLE
 local OpenButton = Instance.new("ImageButton")
-OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
 OpenButton.BackgroundColor3 = Colors.Background
 OpenButton.Position = UDim2.new(0.02, 0, 0.15, 0)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
-OpenButton.Visible = true
 OpenButton.Image = "rbxassetid://13693489228"
-OpenButton.ZIndex = 10
+OpenButton.Visible = true
 Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Parent = OpenButton
-OpenStroke.Color = Colors.Accent
-OpenStroke.Thickness = 2
+Instance.new("UIStroke", OpenButton).Color = Colors.Accent
+OpenButton.UIStroke.Thickness = 2
 
--- 2. MAIN FRAME
+-- MAIN FRAME
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Colors.Background
 MainFrame.BackgroundTransparency = 0.1
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) 
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) 
-MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-OpenButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = not MainFrame.Visible
-end)
+OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
--- --- TOP BAR ---
+-- TOP BAR
 local TopBar = Instance.new("Frame")
 TopBar.Parent = MainFrame
 TopBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -94,21 +78,19 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Blox Fruit"
+HeaderTitle.Text = "Banana Cat Hub - Status Update"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Nút điều khiển
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TopBar
 CloseBtn.BackgroundColor3 = Colors.Close
 CloseBtn.Position = UDim2.new(1, -35, 0.5, -12)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
@@ -117,16 +99,14 @@ MinimizeBtn.Parent = TopBar
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -12)
 MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
-MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.Text = "-"
+MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeBtn.TextSize = 14
 Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
 MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- --- SIDEBAR ---
+-- LAYOUT
 local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Colors.Sidebar
 Sidebar.BackgroundTransparency = 0.5
@@ -140,79 +120,57 @@ TabList.BackgroundTransparency = 1
 TabList.Position = UDim2.new(0, 10, 0, 10)
 TabList.Size = UDim2.new(1, -20, 1, -10)
 TabList.ScrollBarThickness = 4
-TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 TabList.ScrollingDirection = Enum.ScrollingDirection.Y
-TabList.Active = true
+Instance.new("UIListLayout", TabList).Padding = UDim.new(0, 10)
 
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.Parent = TabList
-TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Padding = UDim.new(0, 10)
-
--- --- CONTENT ---
 local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "ContentContainer"
 ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0.25, 10, 0, 50)
 ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
--- --- HÀM TẠO TAB ---
-local currentTab = nil
--- Biến lưu trữ các trang để bạn dùng sau này (ví dụ: Pages["Fam"])
+-- --- LOGIC TAB ---
 local Pages = {} 
+local currentTab = nil
 
 local function CreateTab(name)
-	-- Page
 	local Page = Instance.new("ScrollingFrame")
 	Page.Name = name .. "_Page"
 	Page.Parent = ContentContainer
 	Page.BackgroundTransparency = 1
 	Page.Size = UDim2.new(1, 0, 1, 0)
 	Page.ScrollBarThickness = 4
-	Page.CanvasSize = UDim2.new(0, 0, 0, 0)
 	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	Page.ScrollingDirection = Enum.ScrollingDirection.Y
 	Page.Visible = false
-	
-	local PageLayout = Instance.new("UIListLayout")
-	PageLayout.Parent = Page
-	PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	PageLayout.Padding = UDim.new(0, 8)
+	Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
 
-	-- Tab Button
 	local TabButton = Instance.new("TextButton")
-	TabButton.Name = name .. "_Btn"
 	TabButton.Parent = TabList
 	TabButton.BackgroundColor3 = Colors.Background
-	TabButton.BackgroundTransparency = 0
 	TabButton.Size = UDim2.new(1, -10, 0, 40)
 	TabButton.Font = Enum.Font.GothamBold
 	TabButton.Text = name
 	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
 	TabButton.TextSize = 14
 	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 8)
-	
-	local TabStroke = Instance.new("UIStroke")
-	TabStroke.Parent = TabButton
-	TabStroke.Color = Color3.fromRGB(60, 60, 60)
-	TabStroke.Thickness = 1.5
-	TabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Parent = TabButton
+	Stroke.Color = Color3.fromRGB(60, 60, 60)
+	Stroke.Thickness = 1.5
+	Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 	TabButton.MouseButton1Click:Connect(function()
-		for _, child in pairs(TabList:GetChildren()) do
-			if child:IsA("TextButton") then
-				child.TextColor3 = Color3.fromRGB(150, 150, 150)
-				child.UIStroke.Color = Color3.fromRGB(60, 60, 60)
+		for _, v in pairs(TabList:GetChildren()) do
+			if v:IsA("TextButton") then
+				v.TextColor3 = Color3.fromRGB(150, 150, 150)
+				v.UIStroke.Color = Color3.fromRGB(60, 60, 60)
 			end
 		end
-		for _, child in pairs(ContentContainer:GetChildren()) do
-			if child:IsA("ScrollingFrame") then child.Visible = false end
-		end
+		for _, v in pairs(ContentContainer:GetChildren()) do v.Visible = false end
 		
 		TabButton.TextColor3 = Colors.Accent
-		TabStroke.Color = Colors.Accent
+		Stroke.Color = Colors.Accent
 		Page.Visible = true
 	end)
 
@@ -220,62 +178,109 @@ local function CreateTab(name)
 		currentTab = Page
 		Page.Visible = true
 		TabButton.TextColor3 = Colors.Accent
-		TabStroke.Color = Colors.Accent
+		Stroke.Color = Colors.Accent
 	end
-	
-	Pages[name] = Page -- Lưu vào bảng Pages
+	Pages[name] = Page
 end
 
--- TẠO TAB TỪ DANH SÁCH
-for _, name in ipairs(TabNames) do
-	CreateTab(name)
-end
+for _, name in ipairs(TabNames) do CreateTab(name) end
 
--- --- HÀM TẠO NÚT CHỨC NĂNG (Dành cho bạn tự thêm code sau này) ---
-local function CreateItem(tabName, text, callback)
+-- --- HÀM TẠO MỤC HIỂN THỊ TRẠNG THÁI (STATUS LABEL) ---
+local function CreateStatusItem(tabName, labelText, getValueFunc)
 	local page = Pages[tabName]
-	if not page then return warn("Tab không tồn tại: " .. tabName) end
+	if not page then return end
 
 	local ItemFrame = Instance.new("Frame")
 	ItemFrame.Parent = page
 	ItemFrame.BackgroundColor3 = Colors.ItemBG
 	ItemFrame.BackgroundTransparency = 0.5
-	ItemFrame.Size = UDim2.new(1, -10, 0, 45) 
+	ItemFrame.Size = UDim2.new(1, -10, 0, 40)
+	Instance.new("UICorner", ItemFrame).CornerRadius = UDim.new(0, 6)
 	
-	local ItemCorner = Instance.new("UICorner")
-	ItemCorner.CornerRadius = UDim.new(0, 6)
-	ItemCorner.Parent = ItemFrame
+	-- Nhãn (Ví dụ: "Tộc :")
+	local Label = Instance.new("TextLabel")
+	Label.Parent = ItemFrame
+	Label.BackgroundTransparency = 1
+	Label.Position = UDim2.new(0, 15, 0, 0)
+	Label.Size = UDim2.new(0.4, 0, 1, 0)
+	Label.Font = Enum.Font.GothamSemibold
+	Label.Text = labelText
+	Label.TextColor3 = Colors.Text
+	Label.TextSize = 14
+	Label.TextXAlignment = Enum.TextXAlignment.Left
 	
-	local ItemLabel = Instance.new("TextLabel")
-	ItemLabel.Parent = ItemFrame
-	ItemLabel.BackgroundTransparency = 1
-	ItemLabel.Position = UDim2.new(0, 15, 0, 0)
-	ItemLabel.Size = UDim2.new(0.6, 0, 1, 0)
-	ItemLabel.Font = Enum.Font.GothamSemibold
-	ItemLabel.Text = text
-	ItemLabel.TextColor3 = Colors.Text
-	ItemLabel.TextSize = 13
-	ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
-	
-	local ActionButton = Instance.new("TextButton")
-	ActionButton.Parent = ItemFrame
-	ActionButton.BackgroundColor3 = Colors.Accent
-	ActionButton.Position = UDim2.new(1, -90, 0.5, -12)
-	ActionButton.Size = UDim2.new(0, 80, 0, 24)
-	ActionButton.Font = Enum.Font.GothamBold
-	ActionButton.Text = "Click"
-	ActionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-	ActionButton.TextSize = 12
-	Instance.new("UICorner", ActionButton).CornerRadius = UDim.new(0, 12)
-	
-	ActionButton.MouseButton1Click:Connect(function()
-		pcall(callback)
+	-- Giá trị (Ví dụ: "Human")
+	local ValueLabel = Instance.new("TextLabel")
+	ValueLabel.Parent = ItemFrame
+	ValueLabel.BackgroundTransparency = 1
+	ValueLabel.Position = UDim2.new(0.4, 0, 0, 0)
+	ValueLabel.Size = UDim2.new(0.6, -15, 1, 0)
+	ValueLabel.Font = Enum.Font.GothamBold
+	ValueLabel.Text = "Loading..."
+	ValueLabel.TextColor3 = Colors.Accent -- Màu vàng
+	ValueLabel.TextSize = 14
+	ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+	-- Cập nhật giá trị liên tục
+	spawn(function()
+		while ItemFrame.Parent do -- Chỉ chạy khi GUI còn tồn tại
+			local success, val = pcall(getValueFunc)
+			if success and val then
+				ValueLabel.Text = tostring(val)
+			else
+				ValueLabel.Text = "N/A"
+			end
+			wait(1) -- Cập nhật mỗi 1 giây
+		end
 	end)
 end
 
--- --- VÍ DỤ CÁCH THÊM CHỨC NĂNG (BẠN CÓ THỂ XÓA NẾU KHÔNG CẦN) ---
--- CreateItem("Fam", "Auto Farm Level", function() print("Auto Farm") end)
--- CreateItem("Di chuyển", "Teleport Sea 3", function() print("TP Sea 3") end)
+-- --- THÊM NỘI DUNG VÀO TAB 1: TRẠNG THÁI ---
+local TabStatus = "Trạng thái"
+
+-- 1. Tên nhân vật
+CreateStatusItem(TabStatus, "Tên nhân vật :", function()
+	return LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")"
+end)
+
+-- 2. Tộc (Race)
+CreateStatusItem(TabStatus, "Tộc :", function()
+	-- Thử lấy dữ liệu từ Data của Blox Fruit, nếu không có thì lấy Custom
+	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Race") then
+		return LocalPlayer.Data.Race.Value
+	end
+	return "Human (Check Data)" -- Fallback nếu không tìm thấy
+end)
+
+-- 3. Beli (Tiền)
+CreateStatusItem(TabStatus, "Beli :", function()
+	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Beli") then
+		-- Format tiền tệ (ví dụ: 1,000,000)
+		local money = LocalPlayer.Data.Beli.Value
+		local formatted = tostring(money):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+		return formatted .. " $"
+	end
+	return "0 $"
+end)
+
+-- 4. Điểm F (Fragments)
+CreateStatusItem(TabStatus, "Điểm F :", function()
+	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Fragments") then
+		local frag = LocalPlayer.Data.Fragments.Value
+		local formatted = tostring(frag):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+		return formatted
+	end
+	return "0"
+end)
+
+-- 5. Thời gian Server
+CreateStatusItem(TabStatus, "Thời gian hoạt động :", function()
+	local seconds = workspace.DistributedGameTime
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = math.floor(seconds % 60)
+	return string.format("%02d:%02d:%02d", hours, minutes, secs)
+end)
 
 -- --- LOGIC KÉO THẢ ---
 local dragging, dragInput, dragStart, startPos
@@ -296,24 +301,5 @@ end)
 MainFrame.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 		if dragging then update(input) end
-	end
-end)
-
-local draggingIcon, dragStartIcon, startPosIcon
-OpenButton.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		draggingIcon = true
-		dragStartIcon = input.Position
-		startPosIcon = OpenButton.Position
-		input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then draggingIcon = false end end)
-	end
-end)
-
-OpenButton.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		if draggingIcon then
-			local delta = input.Position - dragStartIcon
-			OpenButton.Position = UDim2.new(startPosIcon.X.Scale, startPosIcon.X.Offset + delta.X, startPosIcon.Y.Scale, startPosIcon.Y.Offset + delta.Y)
-		end
 	end
 end)
