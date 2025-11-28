@@ -1,224 +1,102 @@
 -- /////////////////////////////////////////////////////////////
--- /// BANANA CAT HUB - ORION LIBRARY (STABLE) ///
+-- /// BANANA CAT HUB - EMERGENCY VERSION ///
 -- /////////////////////////////////////////////////////////////
 
--- 1. CHỐNG AFK (TREO MÁY)
-local VirtualUser = game:GetService("VirtualUser")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
+-- 1. BÁO HIỆU ĐẦU TIÊN (Nếu không thấy dòng này trong Console nghĩa là Executor hỏng)
+print("SCRIPT STARTING...")
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Script Status",
+    Text = "Đang khởi động...",
+    Duration = 5
+})
+
+-- 2. DỌN DẸP GUI CŨ
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Xóa hết các GUI trùng tên
+if PlayerGui:FindFirstChild("BananaEmergency") then
+    PlayerGui.BananaEmergency:Destroy()
+end
+
+-- 3. TẠO GUI TRỰC TIẾP
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BananaEmergency"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Đảm bảo không bị che bởi thanh menu Roblox
+
+-- 4. TẠO NÚT MỞ (MÀU ĐỎ CHO DỄ THẤY)
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Màu ĐỎ
+ToggleBtn.Position = UDim2.new(0.5, -50, 0.1, 0) -- Nằm giữa, phía trên
+ToggleBtn.Size = UDim2.new(0, 100, 0, 50)
+ToggleBtn.Text = "OPEN MENU"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 20
+ToggleBtn.Font = Enum.Font.GothamBold
+
+-- Bo tròn nút
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = ToggleBtn
+
+-- 5. TẠO KHUNG MENU CHÍNH
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100) -- Giữa màn hình
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Visible = true -- Mặc định hiện luôn
+
+-- Tiêu đề
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(255, 235, 59) -- Vàng
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "BANANA CAT HUB (TEST)"
+Title.TextColor3 = Color3.fromRGB(0, 0, 0)
+Title.TextSize = 18
+
+-- 6. LOGIC ĐƠN GIẢN NHẤT
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
 end)
 
--- 2. TẢI THƯ VIỆN ORION
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-
--- 3. TẠO CỬA SỔ (WINDOW)
-local Window = OrionLib:MakeWindow({
-    Name = "Banana Cat Hub 🍌 | V3 Stable",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "BananaCatConfig",
-    IntroText = "Banana Cat Hub",
-    IntroIcon = "rbxassetid://13693437997"
-})
-
--- Thông báo chào mừng
-OrionLib:MakeNotification({
-    Name = "Xin chào!",
-    Content = "Script đã tải thành công! Không lỗi.",
-    Image = "rbxassetid://13693437997",
-    Time = 5
-})
-
--- /////////////////////////////////////////////////////////////
--- /// TAB 1: TRẠNG THÁI (STATUS & INFO) ///
--- /////////////////////////////////////////////////////////////
-local StatusTab = Window:MakeTab({
-    Name = "Trạng thái",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
--- Section: Thông tin nhân vật
-local SectionPlayer = StatusTab:AddSection({ Name = "Thông Tin Nhân Vật" })
-
-local Lb_Name = StatusTab:AddLabel("Tên: Loading...")
-local Lb_Level = StatusTab:AddLabel("Cấp độ: Loading...")
-local Lb_Beli = StatusTab:AddLabel("Beli: Loading...")
-local Lb_Frag = StatusTab:AddLabel("Fragment: Loading...")
-local Lb_Race = StatusTab:AddLabel("Tộc: Loading...")
-local Lb_Fruit = StatusTab:AddLabel("Trái: Loading...")
-
--- Section: Trạng thái Server
-local SectionServer = StatusTab:AddSection({ Name = "Trạng Thái Server" })
-
-local Lb_Moon = StatusTab:AddLabel("Full Moon: ...")
-local Lb_Mirage = StatusTab:AddLabel("Mirage: ...")
-local Lb_Kitsune = StatusTab:AddLabel("Kitsune: ...")
-local Lb_Frozen = StatusTab:AddLabel("Frozen Dimension: ...")
-local Lb_DimKill = StatusTab:AddLabel("Dough King Kills: ...")
-local Lb_Indra = StatusTab:AddLabel("Rip_Indra: ...")
-local Lb_Elite = StatusTab:AddLabel("Elite Hunter: ...")
-local Lb_Sword = StatusTab:AddLabel("Legendary Sword: ...")
-
--- /////////////////////////////////////////////////////////////
--- /// LOGIC CẬP NHẬT TỰ ĐỘNG (AUTO UPDATE LOOP) ///
--- /////////////////////////////////////////////////////////////
-
--- Hàm lấy trạng thái trăng
-local function GetMoonStatus()
-    local Phase = game.Lighting:GetMoonPhase()
-    if Phase == Enum.MoonPhase.Full then return "✅ ĐANG CÓ (100%)"
-    elseif Phase == Enum.MoonPhase.WaxingGibbous then return "⏳ Còn 1 ngày"
-    elseif Phase == Enum.MoonPhase.FirstQuarter then return "⏳ Còn 2 ngày"
-    elseif Phase == Enum.MoonPhase.WaxingCrescent then return "⏳ Còn 3 ngày"
-    elseif Phase == Enum.MoonPhase.New then return "🌑 Trăng non"
-    else return "❌ Đã qua / Chờ cycle mới" end
-end
-
--- Hàm lấy số quái Dough King
-local function GetDoughKingCount()
-    if workspace.Map:FindFirstChild("Cake Loaf") then
-        local CounterFrame = workspace.Map["Cake Loaf"]
-        if CounterFrame:FindFirstChild("Frames") and CounterFrame.Frames:FindFirstChild("Counter") then
-            local Text = CounterFrame.Frames.Counter.TextLabel.Text
-            local Count = tonumber(string.match(Text, "%d+"))
-            if Count then return "Đã giết: " .. Count .. " (Còn " .. (500 - Count) .. ")" end
-        end
-    end
-    return "N/A (Chưa vào Cake Land)"
-end
-
--- Vòng lặp cập nhật (Chạy ngầm)
-task.spawn(function()
-    while task.wait(1) do
-        pcall(function()
-            local Plr = game.Players.LocalPlayer
-            
-            -- 1. Cập nhật Player
-            Lb_Name:Set("Tên: " .. Plr.DisplayName)
-            
-            if Plr:FindFirstChild("Data") then
-                local D = Plr.Data
-                if D:FindFirstChild("Level") then Lb_Level:Set("Cấp độ: " .. D.Level.Value) end
-                if D:FindFirstChild("Fragments") then Lb_Frag:Set("Fragment: " .. D.Fragments.Value) end
-                if D:FindFirstChild("Race") then Lb_Race:Set("Tộc: " .. D.Race.Value) end
-                if D:FindFirstChild("DevilFruit") then Lb_Fruit:Set("Trái: " .. D.DevilFruit.Value) end
-            end
-            if Plr:FindFirstChild("leaderstats") and Plr.leaderstats:FindFirstChild("Beli") then
-                 Lb_Beli:Set("Beli: $" .. Plr.leaderstats.Beli.Value)
-            end
-
-            -- 2. Cập nhật Server
-            Lb_Moon:Set("Full Moon: " .. GetMoonStatus())
-
-            if workspace._WorldOrigin.Locations:FindFirstChild("Mirage Island") then 
-                Lb_Mirage:Set("Mirage: ✅ ĐÃ CÓ") 
-            else 
-                Lb_Mirage:Set("Mirage: ❌ Chưa có") 
-            end
-
-            if workspace.Map:FindFirstChild("Kitsune Island") then 
-                Lb_Kitsune:Set("Kitsune: ✅ ĐÃ CÓ") 
-            else 
-                Lb_Kitsune:Set("Kitsune: ❌ Chưa có") 
-            end
-
-            if workspace.Map:FindFirstChild("Frozen Dimension") then 
-                Lb_Frozen:Set("Frozen Dimension: ✅ Cổng Mở") 
-            else 
-                Lb_Frozen:Set("Frozen Dimension: ❌ Đóng") 
-            end
-
-            Lb_DimKill:Set("Dough King: " .. GetDoughKingCount())
-
-            if workspace.Enemies:FindFirstChild("rip_indra True Form") then 
-                Lb_Indra:Set("Rip_Indra: ⚔️ ĐANG ĐÁNH") 
-            else 
-                Lb_Indra:Set("Rip_Indra: ❌ Chưa có") 
-            end
-
-            -- Elite Check
-            local EliteFound = false
-            if workspace.Enemies then
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v.Name == "Deandre" or v.Name == "Diablo" or v.Name == "Urban" then
-                        Lb_Elite:Set("Elite Hunter: 🎯 " .. v.Name)
-                        EliteFound = true
-                        break
-                    end
-                end
-            end
-            if not EliteFound then Lb_Elite:Set("Elite Hunter: ❌ Chưa có") end
-            
-            -- Legendary Sword
-            if workspace:FindFirstChild("Legendary Sword Dealer") then
-                Lb_Sword:Set("Legendary Sword: ✅ Đang bán")
-            else
-                Lb_Sword:Set("Legendary Sword: ❌ Vắng mặt")
-            end
-
-        end)
-    end
+-- Nút Tắt Script
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+CloseBtn.Position = UDim2.new(0.1, 0, 0.8, 0)
+CloseBtn.Size = UDim2.new(0.8, 0, 0, 30)
+CloseBtn.Text = "TẮT SCRIPT (DESTROY)"
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
 end)
 
--- /////////////////////////////////////////////////////////////
--- /// TẠO CÁC TAB CÒN LẠI (PLACEHOLDER) ///
--- /////////////////////////////////////////////////////////////
-
--- Hàm tạo Tab nhanh
-local function MakeTab(Name)
-    return Window:MakeTab({ Name = Name, Icon = "rbxassetid://4483345998", PremiumOnly = false })
+-- 7. KÉO THẢ NÚT (DRAG)
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
-
-local Tab2 = MakeTab("Máy chủ")
-local Tab3 = MakeTab("Chung")
-local Tab4 = MakeTab("Biển")
-local Tab5 = MakeTab("Vật phẩm")
-local Tab6 = MakeTab("Trái & Raid")
-local Tab7 = MakeTab("Di chuyển")
-local Tab8 = MakeTab("Cửa hàng")
-local Tab9 = MakeTab("Tộc v4")
-local Tab10 = MakeTab("Leviathan")
-local Tab11 = MakeTab("Núi lửa")
-local Tab12 = MakeTab("Đảo cáo")
-local Tab13 = MakeTab("Định vị")
-local Tab14 = MakeTab("Cài đặt")
-
--- /////////////////////////////////////////////////////////////
--- /// THÊM CHỨC NĂNG MẪU ///
--- /////////////////////////////////////////////////////////////
-
--- Tab 2: Máy chủ
-Tab2:AddButton({
-    Name = "Rejoin Server (Vào lại)",
-    Callback = function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleBtn.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
     end
-})
+end)
+ToggleBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
 
--- Tab 3: Chung
-Tab3:AddToggle({
-    Name = "Auto Farm Level (Coming Soon)",
-    Default = false,
-    Callback = function(Value)
-        print("Auto Farm:", Value)
-    end
-})
-
--- Tab 7: Di chuyển
-local SeaSection = Tab7:AddSection({ Name = "Teleport Sea" })
-SeaSection:AddButton({ Name = "Teleport Sea 1", Callback = function() print("TP 1") end })
-SeaSection:AddButton({ Name = "Teleport Sea 2", Callback = function() print("TP 2") end })
-SeaSection:AddButton({ Name = "Teleport Sea 3", Callback = function() print("TP 3") end })
-
--- Tab 14: Cài đặt
-Tab14:AddButton({
-    Name = "Hủy Script (Tắt GUI)",
-    Callback = function()
-        OrionLib:Destroy()
-    end
-})
-
--- KHỞI CHẠY ORION
-OrionLib:Init()
+print("SCRIPT LOADED SUCCESS!")
