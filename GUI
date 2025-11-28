@@ -19,14 +19,13 @@ end
 local Colors = {
 	Background = Color3.fromRGB(20, 20, 20),
 	Sidebar = Color3.fromRGB(15, 15, 15),
-	Text = Color3.fromRGB(255, 255, 255),
-	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng (Gold)
+	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng
 	Close = Color3.fromRGB(200, 50, 50),
 }
 
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_14Tabs"
+ScreenGui.Name = "BananaCatHub_FixedScroll"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -38,13 +37,9 @@ OpenButton.BackgroundColor3 = Colors.Background
 OpenButton.Position = UDim2.new(0.02, 0, 0.15, 0)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
 OpenButton.Visible = true
-OpenButton.Image = "rbxassetid://13693489228" -- Ảnh Banana Cat
+OpenButton.Image = "rbxassetid://13693489228"
 OpenButton.ZIndex = 10
-
-local OpenBtnCorner = Instance.new("UICorner")
-OpenBtnCorner.CornerRadius = UDim.new(1, 0)
-OpenBtnCorner.Parent = OpenButton
-
+Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
 local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = OpenButton
 OpenStroke.Color = Colors.Accent
@@ -61,12 +56,9 @@ MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) 
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true 
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
-MainCorner.Parent = MainFrame
-
--- Logic Bật/Tắt từ Icon
+-- Logic Bật/Tắt
 OpenButton.MouseButton1Click:Connect(function()
 	MainFrame.Visible = not MainFrame.Visible
 end)
@@ -84,7 +76,7 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - 14 Tabs Edition"
+HeaderTitle.Text = "Banana Cat Hub - Scroll Fix"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -115,7 +107,7 @@ Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- --- SIDEBAR & CONTENT ---
+-- --- SIDEBAR (DANH SÁCH TAB) ---
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
@@ -125,6 +117,25 @@ Sidebar.Position = UDim2.new(0, 0, 0, 40)
 Sidebar.Size = UDim2.new(0.25, 0, 1, -40)
 Sidebar.BorderSizePixel = 0
 
+-- PHẦN QUAN TRỌNG: CẤU HÌNH SCROLLING FRAME CHO TABLIST
+local TabList = Instance.new("ScrollingFrame")
+TabList.Name = "TabList"
+TabList.Parent = Sidebar
+TabList.BackgroundTransparency = 1
+TabList.Position = UDim2.new(0, 10, 0, 10)
+TabList.Size = UDim2.new(1, -20, 1, -10)
+TabList.ScrollBarThickness = 4 -- Tăng độ dày thanh cuộn để dễ nhìn
+TabList.CanvasSize = UDim2.new(0, 0, 0, 0) -- Reset về 0 để AutomaticSize hoạt động
+TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y -- [QUAN TRỌNG] Tự động giãn chiều dài theo số lượng nút
+TabList.ScrollingDirection = Enum.ScrollingDirection.Y
+TabList.Active = true -- Bật chế độ tương tác chạm/vuốt
+
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.Parent = TabList
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 10)
+
+-- --- CONTENT AREA ---
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
 ContentContainer.Parent = MainFrame
@@ -132,103 +143,76 @@ ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0.25, 10, 0, 50)
 ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
-local TabList = Instance.new("ScrollingFrame")
-TabList.Name = "TabList"
-TabList.Parent = Sidebar
-TabList.BackgroundTransparency = 1
-TabList.Position = UDim2.new(0, 10, 0, 10) -- Padding trái phải 10 để thấy viền
-TabList.Size = UDim2.new(1, -20, 1, -10)
-TabList.ScrollBarThickness = 2
-TabList.CanvasSize = UDim2.new(0, 0, 2, 0) -- Tăng chiều dài để lướt đủ 14 tab
-
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.Parent = TabList
-TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Padding = UDim.new(0, 10) -- Khoảng cách giữa các tab
-
--- --- HÀM TẠO TAB (CÓ VIỀN VÀNG) ---
+-- --- HÀM TẠO TAB ---
 local currentTab = nil
 
 local function CreateTab(tabName, tabNumber)
-	-- 1. Tạo Page (Nội dung) rỗng
+	-- Page
 	local Page = Instance.new("ScrollingFrame")
 	Page.Name = "Page_" .. tabNumber
 	Page.Parent = ContentContainer
 	Page.BackgroundTransparency = 1
 	Page.Size = UDim2.new(1, 0, 1, 0)
 	Page.ScrollBarThickness = 4
-	Page.Visible = false -- Mặc định ẩn
+	Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Page.Visible = false
 	
 	local PageLayout = Instance.new("UIListLayout")
 	PageLayout.Parent = Page
 	PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	PageLayout.Padding = UDim.new(0, 8)
 
-	-- 2. Tạo Nút Tab (Sidebar)
+	-- Button
 	local TabButton = Instance.new("TextButton")
 	TabButton.Name = "TabBtn_" .. tabNumber
 	TabButton.Parent = TabList
 	TabButton.BackgroundColor3 = Colors.Background
-	TabButton.BackgroundTransparency = 0 -- Có nền để nổi viền lên
-	TabButton.Size = UDim2.new(1, 0, 0, 40)
+	TabButton.BackgroundTransparency = 0
+	TabButton.Size = UDim2.new(1, -10, 0, 40) -- Trừ bớt width để không che thanh cuộn
 	TabButton.Font = Enum.Font.GothamBold
-	TabButton.Text = tabName -- Ví dụ: "Tab 1"
-	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150) -- Màu xám khi chưa chọn
+	TabButton.Text = tabName
+	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
 	TabButton.TextSize = 14
 
-	-- Tạo góc bo tròn
-	local TabCorner = Instance.new("UICorner")
-	TabCorner.CornerRadius = UDim.new(0, 8)
-	TabCorner.Parent = TabButton
-
-	-- TẠO VIỀN VÀNG (UIStroke)
+	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 8)
+	
 	local TabStroke = Instance.new("UIStroke")
 	TabStroke.Parent = TabButton
-	TabStroke.Color = Colors.Accent -- Màu vàng
-	TabStroke.Thickness = 1.5 -- Độ dày viền
+	TabStroke.Color = Color3.fromRGB(60, 60, 60)
+	TabStroke.Thickness = 1.5
 	TabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-	-- Xử lý click
 	TabButton.MouseButton1Click:Connect(function()
-		-- Reset màu tất cả nút
 		for _, child in pairs(TabList:GetChildren()) do
 			if child:IsA("TextButton") then
 				child.TextColor3 = Color3.fromRGB(150, 150, 150)
-				-- Có thể đổi màu viền nếu muốn (vd: viền xám khi không chọn)
-				child.UIStroke.Color = Color3.fromRGB(60, 60, 60) 
+				child.UIStroke.Color = Color3.fromRGB(60, 60, 60)
 			end
 		end
-		-- Ẩn tất cả trang
 		for _, child in pairs(ContentContainer:GetChildren()) do
 			if child:IsA("ScrollingFrame") then child.Visible = false end
 		end
 		
-		-- Active nút hiện tại
 		TabButton.TextColor3 = Colors.Accent
-		TabStroke.Color = Colors.Accent -- Viền vàng sáng lên
+		TabStroke.Color = Colors.Accent
 		Page.Visible = true
 	end)
 
-	-- Mặc định set viền xám cho các tab chưa chọn để đỡ rối mắt
-	TabStroke.Color = Color3.fromRGB(60, 60, 60)
-
-	-- Nếu là Tab 1 thì active ngay từ đầu
 	if currentTab == nil then
 		currentTab = Page
 		Page.Visible = true
 		TabButton.TextColor3 = Colors.Accent
 		TabStroke.Color = Colors.Accent
 	end
-
-	return Page
 end
 
--- --- VÒNG LẶP TẠO 14 TAB ---
+-- TẠO 14 TAB
 for i = 1, 14 do
 	CreateTab("Tab " .. i, i)
 end
 
--- --- KÉO THẢ (DRAG) ---
+-- --- KÉO THẢ ---
 local dragging, dragInput, dragStart, startPos
 local function update(input)
 	local delta = input.Position - dragStart
