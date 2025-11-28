@@ -19,19 +19,36 @@ end
 local Colors = {
 	Background = Color3.fromRGB(20, 20, 20),
 	Sidebar = Color3.fromRGB(15, 15, 15),
-	ItemBG = Color3.fromRGB(30, 30, 30), -- Màu nền của nút chức năng
+	ItemBG = Color3.fromRGB(30, 30, 30),
 	Text = Color3.fromRGB(255, 255, 255),
 	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng
 	Close = Color3.fromRGB(200, 50, 50),
 }
 
+-- --- DANH SÁCH TÊN TAB ---
+local TabNames = {
+	"Trạng thái",
+	"Fam",
+	"Biển",
+	"item",
+	"trái & tập kích",
+	"cửa hàng",
+	"Di chuyển",
+	"Tộc V4",
+	"Núi lửa",
+	"Đảo LEVI",
+	"Đảo cáo",
+	"PVP",
+	"Cài đặt"
+}
+
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_ContentScroll"
+ScreenGui.Name = "BananaCatHub_Final"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- 1. ICON TOGGLE
+-- 1. ICON TOGGLE (Luôn hiện)
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
@@ -77,11 +94,12 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Full Scroll"
+HeaderTitle.Text = "Banana Cat Hub - Blox Fruit"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 
+-- Nút điều khiển
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = TopBar
 CloseBtn.BackgroundColor3 = Colors.Close
@@ -106,7 +124,7 @@ MinimizeBtn.TextSize = 14
 Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
 MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
--- --- SIDEBAR (TAB LIST - CÓ SCROLL) ---
+-- --- SIDEBAR ---
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
@@ -123,15 +141,16 @@ TabList.Position = UDim2.new(0, 10, 0, 10)
 TabList.Size = UDim2.new(1, -20, 1, -10)
 TabList.ScrollBarThickness = 4
 TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Tự giãn Sidebar
+TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 TabList.ScrollingDirection = Enum.ScrollingDirection.Y
+TabList.Active = true
 
 local TabListLayout = Instance.new("UIListLayout")
 TabListLayout.Parent = TabList
 TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 10)
 
--- --- CONTENT CONTAINER ---
+-- --- CONTENT ---
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
 ContentContainer.Parent = MainFrame
@@ -139,80 +158,38 @@ ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0.25, 10, 0, 50)
 ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
--- --- HÀM TẠO ITEM (NÚT CHỨC NĂNG) ---
--- Mình thêm lại hàm này để bạn có thể tạo nút trong Tab
-local function CreateItem(parentPage, text, callback)
-	local ItemFrame = Instance.new("Frame")
-	ItemFrame.Parent = parentPage
-	ItemFrame.BackgroundColor3 = Colors.ItemBG
-	ItemFrame.BackgroundTransparency = 0.5
-	-- Chiều ngang trừ đi 10 pixel để chừa chỗ cho thanh cuộn không che mất nút
-	ItemFrame.Size = UDim2.new(1, -10, 0, 45) 
-	
-	local ItemCorner = Instance.new("UICorner")
-	ItemCorner.CornerRadius = UDim.new(0, 6)
-	ItemCorner.Parent = ItemFrame
-	
-	local ItemLabel = Instance.new("TextLabel")
-	ItemLabel.Parent = ItemFrame
-	ItemLabel.BackgroundTransparency = 1
-	ItemLabel.Position = UDim2.new(0, 15, 0, 0)
-	ItemLabel.Size = UDim2.new(0.6, 0, 1, 0)
-	ItemLabel.Font = Enum.Font.GothamSemibold
-	ItemLabel.Text = text
-	ItemLabel.TextColor3 = Colors.Text
-	ItemLabel.TextSize = 13
-	ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
-	
-	local ActionButton = Instance.new("TextButton")
-	ActionButton.Parent = ItemFrame
-	ActionButton.BackgroundColor3 = Colors.Accent
-	ActionButton.Position = UDim2.new(1, -90, 0.5, -12)
-	ActionButton.Size = UDim2.new(0, 80, 0, 24)
-	ActionButton.Font = Enum.Font.GothamBold
-	ActionButton.Text = "Click"
-	ActionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-	ActionButton.TextSize = 12
-	
-	local BtnCorner = Instance.new("UICorner")
-	BtnCorner.CornerRadius = UDim.new(0, 12)
-	BtnCorner.Parent = ActionButton
-	
-	ActionButton.MouseButton1Click:Connect(function()
-		pcall(callback)
-	end)
-end
-
 -- --- HÀM TẠO TAB ---
 local currentTab = nil
-local tabsTable = {} -- Lưu trữ các Page để gọi sau này
+-- Biến lưu trữ các trang để bạn dùng sau này (ví dụ: Pages["Fam"])
+local Pages = {} 
 
-local function CreateTab(tabName, tabNumber)
-	-- [QUAN TRỌNG] Cấu hình Page để vuốt được
+local function CreateTab(name)
+	-- Page
 	local Page = Instance.new("ScrollingFrame")
-	Page.Name = "Page_" .. tabNumber
+	Page.Name = name .. "_Page"
 	Page.Parent = ContentContainer
 	Page.BackgroundTransparency = 1
-	Page.Size = UDim2.new(1, 0, 1, 0) -- Full khung chứa
-	Page.ScrollBarThickness = 4 -- Độ dày thanh cuộn
-	Page.CanvasSize = UDim2.new(0, 0, 0, 0) -- Reset về 0
-	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Tự động giãn chiều dài khi thêm nút
+	Page.Size = UDim2.new(1, 0, 1, 0)
+	Page.ScrollBarThickness = 4
+	Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	Page.ScrollingDirection = Enum.ScrollingDirection.Y
 	Page.Visible = false
 	
 	local PageLayout = Instance.new("UIListLayout")
 	PageLayout.Parent = Page
 	PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	PageLayout.Padding = UDim.new(0, 8) -- Khoảng cách giữa các item
+	PageLayout.Padding = UDim.new(0, 8)
 
-	-- Tạo nút Tab bên Sidebar
+	-- Tab Button
 	local TabButton = Instance.new("TextButton")
+	TabButton.Name = name .. "_Btn"
 	TabButton.Parent = TabList
 	TabButton.BackgroundColor3 = Colors.Background
 	TabButton.BackgroundTransparency = 0
 	TabButton.Size = UDim2.new(1, -10, 0, 40)
 	TabButton.Font = Enum.Font.GothamBold
-	TabButton.Text = tabName
+	TabButton.Text = name
 	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
 	TabButton.TextSize = 14
 	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 8)
@@ -246,25 +223,61 @@ local function CreateTab(tabName, tabNumber)
 		TabStroke.Color = Colors.Accent
 	end
 	
-	tabsTable[tabNumber] = Page -- Lưu Page vào bảng để dùng sau
+	Pages[name] = Page -- Lưu vào bảng Pages
 end
 
--- TẠO 14 TAB
-for i = 1, 14 do
-	CreateTab("Tab " .. i, i)
+-- TẠO TAB TỪ DANH SÁCH
+for _, name in ipairs(TabNames) do
+	CreateTab(name)
 end
 
--- --- [DEMO] THÊM NHIỀU NÚT VÀO TAB 1 ĐỂ TEST VUỐT ---
--- Vì nếu Tab trống thì sẽ không vuốt được, mình tạo thử 20 nút ở Tab 1
-if tabsTable[1] then
-	for k = 1, 20 do
-		CreateItem(tabsTable[1], "Chức năng Test " .. k, function()
-			print("Đã bấm nút số " .. k)
-		end)
-	end
+-- --- HÀM TẠO NÚT CHỨC NĂNG (Dành cho bạn tự thêm code sau này) ---
+local function CreateItem(tabName, text, callback)
+	local page = Pages[tabName]
+	if not page then return warn("Tab không tồn tại: " .. tabName) end
+
+	local ItemFrame = Instance.new("Frame")
+	ItemFrame.Parent = page
+	ItemFrame.BackgroundColor3 = Colors.ItemBG
+	ItemFrame.BackgroundTransparency = 0.5
+	ItemFrame.Size = UDim2.new(1, -10, 0, 45) 
+	
+	local ItemCorner = Instance.new("UICorner")
+	ItemCorner.CornerRadius = UDim.new(0, 6)
+	ItemCorner.Parent = ItemFrame
+	
+	local ItemLabel = Instance.new("TextLabel")
+	ItemLabel.Parent = ItemFrame
+	ItemLabel.BackgroundTransparency = 1
+	ItemLabel.Position = UDim2.new(0, 15, 0, 0)
+	ItemLabel.Size = UDim2.new(0.6, 0, 1, 0)
+	ItemLabel.Font = Enum.Font.GothamSemibold
+	ItemLabel.Text = text
+	ItemLabel.TextColor3 = Colors.Text
+	ItemLabel.TextSize = 13
+	ItemLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local ActionButton = Instance.new("TextButton")
+	ActionButton.Parent = ItemFrame
+	ActionButton.BackgroundColor3 = Colors.Accent
+	ActionButton.Position = UDim2.new(1, -90, 0.5, -12)
+	ActionButton.Size = UDim2.new(0, 80, 0, 24)
+	ActionButton.Font = Enum.Font.GothamBold
+	ActionButton.Text = "Click"
+	ActionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+	ActionButton.TextSize = 12
+	Instance.new("UICorner", ActionButton).CornerRadius = UDim.new(0, 12)
+	
+	ActionButton.MouseButton1Click:Connect(function()
+		pcall(callback)
+	end)
 end
 
--- --- LOGIC KÉO THẢ (DRAG) ---
+-- --- VÍ DỤ CÁCH THÊM CHỨC NĂNG (BẠN CÓ THỂ XÓA NẾU KHÔNG CẦN) ---
+-- CreateItem("Fam", "Auto Farm Level", function() print("Auto Farm") end)
+-- CreateItem("Di chuyển", "Teleport Sea 3", function() print("TP Sea 3") end)
+
+-- --- LOGIC KÉO THẢ ---
 local dragging, dragInput, dragStart, startPos
 local function update(input)
 	local delta = input.Position - dragStart
