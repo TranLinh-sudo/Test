@@ -5,14 +5,15 @@ local CoreGui = game:GetService("CoreGui")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- --- BIẾN TOÀN CỤC (SETTINGS) ---
+-- --- CÀI ĐẶT CHUNG (SETTINGS) ---
 _G.Settings = {
-	WeaponMode = "Melee", -- Mặc định
-	AutoFarmLevel = false,
-	AutoFarmNear = false,
-	AutoBone = false,
-	AutoTradeBone = false,
-	AutoSoulReaper = false
+	WeaponMode = "Melee",
+	AutoFarmLevel = false,   -- Farm cấp (Sea 1, 2, 3)
+	AutoFarmNear = false,    -- Farm quái gần
+	AutoBone = false,        -- Farm Xương
+	AutoTradeBone = false,   -- Đổi Xương
+	AutoSoulReaper = false,  -- Gọi Boss
+	Distance = 5             -- Khoảng cách trên đầu quái (5 mét)
 }
 
 -- Hàm bảo vệ UI
@@ -21,15 +22,15 @@ local function getParent()
 	if success then return result else return LocalPlayer:WaitForChild("PlayerGui") end
 end
 
--- --- CẤU HÌNH MÀU SẮC ---
+-- --- MÀU SẮC ---
 local Colors = {
 	Background = Color3.fromRGB(20, 20, 20),
 	Sidebar = Color3.fromRGB(15, 15, 15),
 	ItemBG = Color3.fromRGB(35, 35, 35),
 	Text = Color3.fromRGB(255, 255, 255),
 	Accent = Color3.fromRGB(255, 215, 0), -- Vàng
-	Close = Color3.fromRGB(200, 50, 50),
-	ToggleOn = Color3.fromRGB(0, 200, 100), -- Xanh lá khi bật
+	SectionText = Color3.fromRGB(0, 255, 255), -- Xanh ngọc cho tiêu đề mục
+	ToggleOn = Color3.fromRGB(0, 200, 100),
 	ToggleOff = Color3.fromRGB(60, 60, 60)
 }
 
@@ -41,83 +42,49 @@ local TabNames = {
 
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_Tab2_Fam"
+ScreenGui.Name = "BananaCatHub_Final_Vip"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- ICON
+-- ICON TOGGLE
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Parent = ScreenGui
 OpenButton.BackgroundColor3 = Colors.Background
 OpenButton.Position = UDim2.new(0.02, 0, 0.15, 0)
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
 OpenButton.Image = "rbxassetid://13693489228"
-OpenButton.Visible = true
 Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", OpenButton).Color = Colors.Accent
-OpenButton.MouseButton1Click:Connect(function() 
-    ScreenGui.MainFrame.Visible = not ScreenGui.MainFrame.Visible 
-end)
 
 -- MAIN FRAME
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Colors.Background
 MainFrame.BackgroundTransparency = 0.1
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) 
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) 
 MainFrame.ClipsDescendants = true 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
--- TOP BAR
-local TopBar = Instance.new("Frame")
-TopBar.Parent = MainFrame
-TopBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TopBar.BackgroundTransparency = 1
-TopBar.Size = UDim2.new(1, 0, 0, 40)
+OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
-local HeaderTitle = Instance.new("TextLabel")
-HeaderTitle.Parent = TopBar
-HeaderTitle.BackgroundTransparency = 1
-HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
-HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
-HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Tab Fam Vip"
-HeaderTitle.TextColor3 = Colors.Accent
-HeaderTitle.TextSize = 18
-HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = TopBar
-CloseBtn.BackgroundColor3 = Colors.Close
-CloseBtn.Position = UDim2.new(1, -35, 0.5, -12)
-CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Text = "X"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
--- LAYOUT
+-- LAYOUT CƠ BẢN
 local Sidebar = Instance.new("Frame")
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Colors.Sidebar
 Sidebar.BackgroundTransparency = 0.5
 Sidebar.Position = UDim2.new(0, 0, 0, 40)
 Sidebar.Size = UDim2.new(0.25, 0, 1, -40)
-Sidebar.BorderSizePixel = 0
 
 local TabList = Instance.new("ScrollingFrame")
 TabList.Parent = Sidebar
 TabList.BackgroundTransparency = 1
 TabList.Position = UDim2.new(0, 10, 0, 10)
 TabList.Size = UDim2.new(1, -20, 1, -10)
-TabList.ScrollBarThickness = 4
 TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-TabList.ScrollingDirection = Enum.ScrollingDirection.Y
-Instance.new("UIListLayout", TabList).Padding = UDim.new(0, 10)
+TabList.ScrollBarThickness = 2
+Instance.new("UIListLayout", TabList).Padding = UDim.new(0, 5)
 
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Parent = MainFrame
@@ -128,78 +95,162 @@ ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 local Pages = {} 
 local currentTab = nil
 
--- --- HÀM TẠO CƠ BẢN ---
+-- HÀM TẠO TAB
 local function CreateTab(name)
 	local Page = Instance.new("ScrollingFrame")
-	Page.Name = name .. "_Page"
+	Page.Name = name
 	Page.Parent = ContentContainer
 	Page.BackgroundTransparency = 1
 	Page.Size = UDim2.new(1, 0, 1, 0)
-	Page.ScrollBarThickness = 4
-	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	Page.ScrollingDirection = Enum.ScrollingDirection.Y
 	Page.Visible = false
+	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Page.ScrollBarThickness = 4
 	Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
 
-	local TabButton = Instance.new("TextButton")
-	TabButton.Parent = TabList
-	TabButton.BackgroundColor3 = Colors.Background
-	TabButton.Size = UDim2.new(1, -10, 0, 40)
-	TabButton.Font = Enum.Font.GothamBold
-	TabButton.Text = name
-	TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
-	TabButton.TextSize = 14
-	Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 8)
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Parent = TabButton
-	Stroke.Color = Color3.fromRGB(60, 60, 60)
-	Stroke.Thickness = 1.5
-	Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-	TabButton.MouseButton1Click:Connect(function()
-		for _, v in pairs(TabList:GetChildren()) do
-			if v:IsA("TextButton") then
-				v.TextColor3 = Color3.fromRGB(150, 150, 150)
-				v.UIStroke.Color = Color3.fromRGB(60, 60, 60)
-			end
+	local TabBtn = Instance.new("TextButton")
+	TabBtn.Parent = TabList
+	TabBtn.BackgroundColor3 = Colors.Background
+	TabBtn.Size = UDim2.new(1, -10, 0, 40)
+	TabBtn.Font = Enum.Font.GothamBold
+	TabBtn.Text = name
+	TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+	TabBtn.TextSize = 13
+	Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
+	
+	TabBtn.MouseButton1Click:Connect(function()
+		for _,v in pairs(ContentContainer:GetChildren()) do v.Visible = false end
+		for _,v in pairs(TabList:GetChildren()) do 
+			if v:IsA("TextButton") then v.TextColor3 = Color3.fromRGB(150,150,150) end
 		end
-		for _, v in pairs(ContentContainer:GetChildren()) do v.Visible = false end
-		
-		TabButton.TextColor3 = Colors.Accent
-		Stroke.Color = Colors.Accent
 		Page.Visible = true
+		TabBtn.TextColor3 = Colors.Accent
 	end)
 
 	if currentTab == nil then
 		currentTab = Page
 		Page.Visible = true
-		TabButton.TextColor3 = Colors.Accent
-		Stroke.Color = Colors.Accent
+		TabBtn.TextColor3 = Colors.Accent
 	end
 	Pages[name] = Page
 end
 
 for _, name in ipairs(TabNames) do CreateTab(name) end
 
--- --- HÀM UI NÂNG CAO (CHO TAB FAM) ---
+-- --- CÁC HÀM UI ---
 
--- 1. DROPDOWN (Menu chọn chế độ)
-local function CreateDropdown(parentPage, title, options, callback)
+-- 1. CreateSection (Để chia cách các phần như bạn yêu cầu)
+local function CreateSection(tabName, text)
+	local page = Pages[tabName]
+	if not page then return end
+	
+	local Label = Instance.new("TextLabel")
+	Label.Parent = page
+	Label.Text = "--- [ " .. text .. " ] ---"
+	Label.Font = Enum.Font.GothamBlack
+	Label.TextSize = 15
+	Label.TextColor3 = Colors.SectionText
+	Label.Size = UDim2.new(1, -10, 0, 35)
+	Label.BackgroundTransparency = 1
+end
+
+-- 2. CreateStatusItem (Khôi phục Tab 1)
+local function CreateStatusItem(tabName, labelText, getValueFunc)
+	local page = Pages[tabName]
 	local Frame = Instance.new("Frame")
-	Frame.Parent = parentPage
+	Frame.Parent = page
 	Frame.BackgroundColor3 = Colors.ItemBG
 	Frame.BackgroundTransparency = 0.5
-	Frame.Size = UDim2.new(1, -10, 0, 45) -- Mặc định đóng
+	Frame.Size = UDim2.new(1, -10, 0, 40)
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+
+	local Lbl = Instance.new("TextLabel")
+	Lbl.Parent = Frame
+	Lbl.Text = labelText
+	Lbl.TextColor3 = Colors.Text
+	Lbl.Font = Enum.Font.GothamSemibold
+	Lbl.TextSize = 13
+	Lbl.Size = UDim2.new(0.4, 0, 1, 0)
+	Lbl.Position = UDim2.new(0, 15, 0, 0)
+	Lbl.TextXAlignment = Enum.TextXAlignment.Left
+	Lbl.BackgroundTransparency = 1
+
+	local Val = Instance.new("TextLabel")
+	Val.Parent = Frame
+	Val.Text = "..."
+	Val.TextColor3 = Colors.Accent
+	Val.Font = Enum.Font.GothamBold
+	Val.TextSize = 13
+	Val.Size = UDim2.new(0.6, -15, 1, 0)
+	Val.Position = UDim2.new(0.4, 0, 0, 0)
+	Val.TextXAlignment = Enum.TextXAlignment.Right
+	Val.BackgroundTransparency = 1
+
+	spawn(function()
+		while Frame.Parent do
+			local s, r = pcall(getValueFunc)
+			if s then Val.Text = tostring(r) else Val.Text = "N/A" end
+			wait(1)
+		end
+	end)
+end
+
+-- 3. CreateToggle (Ô vuông bật tắt)
+local function CreateToggle(tabName, text, settingKey)
+	local page = Pages[tabName]
+	local Frame = Instance.new("Frame")
+	Frame.Parent = page
+	Frame.BackgroundColor3 = Colors.ItemBG
+	Frame.BackgroundTransparency = 0.5
+	Frame.Size = UDim2.new(1, -10, 0, 45)
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+
+	local Lbl = Instance.new("TextLabel")
+	Lbl.Parent = Frame
+	Lbl.Text = text
+	Lbl.TextColor3 = Colors.Text
+	Lbl.Font = Enum.Font.GothamSemibold
+	Lbl.TextSize = 13
+	Lbl.Size = UDim2.new(0.7, 0, 1, 0)
+	Lbl.Position = UDim2.new(0, 15, 0, 0)
+	Lbl.TextXAlignment = Enum.TextXAlignment.Left
+	Lbl.BackgroundTransparency = 1
+
+	local ToggleBtn = Instance.new("TextButton")
+	ToggleBtn.Parent = Frame
+	ToggleBtn.Position = UDim2.new(1, -50, 0.5, -12)
+	ToggleBtn.Size = UDim2.new(0, 24, 0, 24)
+	ToggleBtn.BackgroundColor3 = Colors.ToggleOff
+	ToggleBtn.Text = ""
+	Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 4)
+
+	ToggleBtn.MouseButton1Click:Connect(function()
+		_G.Settings[settingKey] = not _G.Settings[settingKey]
+		if _G.Settings[settingKey] then
+			ToggleBtn.BackgroundColor3 = Colors.ToggleOn
+		else
+			ToggleBtn.BackgroundColor3 = Colors.ToggleOff
+		end
+	end)
+end
+
+-- 4. CreateDropdown (Chọn vũ khí)
+local function CreateDropdown(tabName, title, options)
+	local page = Pages[tabName]
+	local Frame = Instance.new("Frame")
+	Frame.Parent = page
+	Frame.BackgroundColor3 = Colors.ItemBG
+	Frame.BackgroundTransparency = 0.5
+	Frame.Size = UDim2.new(1, -10, 0, 45)
 	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
 	Frame.ClipsDescendants = true
 
 	local Title = Instance.new("TextLabel")
 	Title.Parent = Frame
-	Title.Text = title .. ": " .. options[1] -- Hiển thị cái đầu tiên
+	Title.Text = title .. ": " .. options[1]
+	Title.TextColor3 = Colors.Text
 	Title.Font = Enum.Font.GothamBold
 	Title.TextSize = 13
-	Title.TextColor3 = Colors.Text
-	Title.Size = UDim2.new(1, -30, 0, 45)
+	Title.Size = UDim2.new(1, 0, 0, 45)
 	Title.Position = UDim2.new(0, 15, 0, 0)
 	Title.TextXAlignment = Enum.TextXAlignment.Left
 	Title.BackgroundTransparency = 1
@@ -211,232 +262,151 @@ local function CreateDropdown(parentPage, title, options, callback)
 	OpenBtn.Text = ""
 
 	local isOpen = false
-	local currentHeight = 45
-
 	OpenBtn.MouseButton1Click:Connect(function()
 		isOpen = not isOpen
-		if isOpen then
-			Frame.Size = UDim2.new(1, -10, 0, 45 + (#options * 35))
-		else
+		Frame.Size = isOpen and UDim2.new(1, -10, 0, 45 + (#options*30)) or UDim2.new(1, -10, 0, 45)
+	end)
+
+	for i, v in ipairs(options) do
+		local Opt = Instance.new("TextButton")
+		Opt.Parent = Frame
+		Opt.Size = UDim2.new(1, -20, 0, 30)
+		Opt.Position = UDim2.new(0, 10, 0, 45 + ((i-1)*30))
+		Opt.BackgroundColor3 = Colors.Sidebar
+		Opt.Text = v
+		Opt.TextColor3 = Color3.fromRGB(200,200,200)
+		Opt.MouseButton1Click:Connect(function()
+			_G.Settings.WeaponMode = v
+			Title.Text = title .. ": " .. v
 			Frame.Size = UDim2.new(1, -10, 0, 45)
-		end
-	end)
-
-	for i, opt in ipairs(options) do
-		local OptionBtn = Instance.new("TextButton")
-		OptionBtn.Parent = Frame
-		OptionBtn.BackgroundColor3 = Colors.Sidebar
-		OptionBtn.Size = UDim2.new(1, -20, 0, 30)
-		OptionBtn.Position = UDim2.new(0, 10, 0, 45 + ((i-1)*35))
-		OptionBtn.Text = opt
-		OptionBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-		OptionBtn.Font = Enum.Font.Gotham
-		Instance.new("UICorner", OptionBtn).CornerRadius = UDim.new(0, 4)
-
-		OptionBtn.MouseButton1Click:Connect(function()
-			Title.Text = title .. ": " .. opt
-			Frame.Size = UDim2.new(1, -10, 0, 45) -- Đóng lại khi chọn
 			isOpen = false
-			callback(opt)
 		end)
 	end
 end
 
--- 2. TOGGLE (Ô vuông bật tắt)
-local function CreateToggle(parentPage, text, settingKey, callback)
-	local Frame = Instance.new("Frame")
-	Frame.Parent = parentPage
-	Frame.BackgroundColor3 = Colors.ItemBG
-	Frame.BackgroundTransparency = 0.5
-	Frame.Size = UDim2.new(1, -10, 0, 40)
-	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-
-	local Label = Instance.new("TextLabel")
-	Label.Parent = Frame
-	Label.Text = text
-	Label.Font = Enum.Font.GothamSemibold
-	Label.TextSize = 13
-	Label.TextColor3 = Colors.Text
-	Label.Size = UDim2.new(0.7, 0, 1, 0)
-	Label.Position = UDim2.new(0, 15, 0, 0)
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	Label.BackgroundTransparency = 1
-
-	-- Ô vuông (Checkbox)
-	local ToggleBtn = Instance.new("TextButton")
-	ToggleBtn.Parent = Frame
-	ToggleBtn.Position = UDim2.new(1, -50, 0.5, -12)
-	ToggleBtn.Size = UDim2.new(0, 24, 0, 24)
-	ToggleBtn.BackgroundColor3 = Colors.ToggleOff
-	ToggleBtn.Text = ""
-	Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 4)
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Parent = ToggleBtn
-	Stroke.Color = Color3.fromRGB(100, 100, 100)
-	Stroke.Thickness = 1.5
-
-	ToggleBtn.MouseButton1Click:Connect(function()
-		_G.Settings[settingKey] = not _G.Settings[settingKey]
-		local state = _G.Settings[settingKey]
-		
-		if state then
-			ToggleBtn.BackgroundColor3 = Colors.ToggleOn
-			Stroke.Color = Colors.ToggleOn
-		else
-			ToggleBtn.BackgroundColor3 = Colors.ToggleOff
-			Stroke.Color = Color3.fromRGB(100, 100, 100)
-		end
-		
-		if callback then callback(state) end
-	end)
-end
-
--- 3. LABEL (Tiêu đề phân đoạn)
-local function CreateSection(parentPage, text)
-	local Label = Instance.new("TextLabel")
-	Label.Parent = parentPage
-	Label.Text = "--- " .. text .. " ---"
-	Label.Font = Enum.Font.GothamBold
-	Label.TextSize = 14
-	Label.TextColor3 = Colors.Accent
-	Label.Size = UDim2.new(1, 0, 0, 30)
-	Label.BackgroundTransparency = 1
-	Label.TextXAlignment = Enum.TextXAlignment.Center
-end
-
--- --- [PHẦN QUAN TRỌNG] LOGIC TAB 2: FAM ---
-local FamPage = Pages["Fam"]
-
-if FamPage then
-	-- A. CHỌN CHẾ ĐỘ VŨ KHÍ
-	CreateDropdown(FamPage, "Chế độ Fam", {"Melee", "Sword", "Fruit"}, function(selected)
-		_G.Settings.WeaponMode = selected
-		print("Đã chọn vũ khí: " .. selected)
-	end)
-
-	-- B. AUTO LEVEL
-	CreateSection(FamPage, "Auto Level (Theo Sea)")
-	
-	CreateToggle(FamPage, "Auto Farm Level (Tự nhận Sea 1-3)", "AutoFarmLevel", function(state)
-		if state then
-			print("Bắt đầu Auto Farm Level...")
-			-- Kích hoạt vòng lặp Farm (Xem hàm logic bên dưới)
-		else
-			print("Dừng Auto Farm Level")
-		end
-	end)
-
-	-- C. AUTO FARM QUÁI GẦN
-	CreateSection(FamPage, "Farm Quái Gần")
-	CreateToggle(FamPage, "Auto Farm Nearest", "AutoFarmNear", function(state)
-		-- Logic Farm gần
-	end)
-
-	-- D. FAM XƯƠNG (HAUNTED CASTLE)
-	CreateSection(FamPage, "Fam Xương & Boss")
-	
-	CreateToggle(FamPage, "Auto Fam Xương", "AutoBone", function(state)
-		-- Logic Farm tại Lâu đài bóng tối
-	end)
-
-	CreateToggle(FamPage, "Auto Đổi Xương (Random)", "AutoTradeBone", function(state)
-		spawn(function()
-			while _G.Settings.AutoTradeBone do
-				pcall(function()
-					-- Giả lập gọi RemoteEvent đổi xương
-					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-				end)
-				wait(3) -- Đổi mỗi 3 giây
-			end
-		end)
-	end)
-
-	CreateToggle(FamPage, "Auto Soul Reaper (Triệu hồi)", "AutoSoulReaper", function(state)
-		-- Logic kiểm tra Hallowed Essence và triệu hồi
-	end)
-end
-
-
--- --- [ENGINE] LOGIC FARM (PHẦN XỬ LÝ NGẦM) ---
--- Đây là phần xử lý đánh 20 cái nghỉ 1.9s và gom quái
-spawn(function()
-	while true do
-		wait()
-		if _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone then
-			
-			-- 1. GIẢ LẬP ĐÁNH NHANH (Fast Attack)
-			-- Logic: Đánh 20 lần trong 1s -> Nghỉ 1.9s
-			pcall(function()
-				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
-					-- Bắt đầu chuỗi combo 20 hit
-					for i = 1, 20 do
-						if not (_G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone) then break end
-						
-						-- Giả lập click chuột hoặc gọi Remote combat
-						VirtualUser:CaptureController()
-						VirtualUser:Button1Down(Vector2.new(1280, 672))
-						
-						-- Tốc độ siêu nhanh (20 hit / giây = 0.05s mỗi hit)
-						wait(0.05) 
-					end
-					
-					-- 2. NGHỈ TRÁNH BAN (Anti-Ban)
-					wait(1.9)
-				end
-			end)
-		end
-	end
+-- --- THIẾT LẬP NỘI DUNG TAB 1 (ĐÃ KHÔI PHỤC) ---
+local Tab1 = "Trạng thái"
+CreateStatusItem(Tab1, "Tên nhân vật :", function() return LocalPlayer.DisplayName end)
+CreateStatusItem(Tab1, "Tộc :", function() return LocalPlayer.Data.Race.Value end)
+CreateStatusItem(Tab1, "Beli :", function() return LocalPlayer.Data.Beli.Value end)
+CreateStatusItem(Tab1, "Điểm F :", function() return LocalPlayer.Data.Fragments.Value end)
+CreateStatusItem(Tab1, "Thời gian sever :", function() 
+	local t = workspace.DistributedGameTime
+	return string.format("%02d:%02d:%02d", math.floor(t/3600), math.floor((t%3600)/60), math.floor(t%60))
 end)
 
--- LOGIC GOM QUÁI (MAGENET) & KHOẢNG CÁCH (DISTANCE)
+-- --- THIẾT LẬP NỘI DUNG TAB 2 (FAM - CÓ PHÂN CHIA) ---
+local Tab2 = "Fam"
+
+-- PHẦN 1: CÀI ĐẶT FAM CHUNG
+CreateSection(Tab2, "CÀI ĐẶT & AUTO LEVEL")
+CreateDropdown(Tab2, "Chế độ Fam", {"Melee", "Sword", "Fruit"})
+CreateToggle(Tab2, "Auto Level (Sea 1 -> 3)", "AutoFarmLevel")
+CreateToggle(Tab2, "Auto Fam Quái Gần", "AutoFarmNear")
+
+-- PHẦN 2: FAM XƯƠNG (SEA 3)
+CreateSection(Tab2, "FAM XƯƠNG (SEA 3)")
+CreateToggle(Tab2, "Auto Fam Xương", "AutoBone")
+CreateToggle(Tab2, "Auto Đổi Xương", "AutoTradeBone")
+CreateToggle(Tab2, "Auto Soul Reaper", "AutoSoulReaper")
+
+-- --- [CORE] LOGIC FARM VIP (ANTI-JITTER + DISTANCE) ---
+
+-- 1. Hàm cố định nhân vật (Anti-Jitter)
+local function NoClipAndFloat(targetCFrame)
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	
+	local hrp = char.HumanoidRootPart
+	
+	-- Tính toán vị trí trên đầu quái 5m
+	local targetPos = targetCFrame * CFrame.new(0, _G.Settings.Distance, 0)
+	
+	-- Di chuyển CFrame
+	hrp.CFrame = targetPos
+	
+	-- Giữ nhân vật không bị rơi (Fix giật)
+	if not hrp:FindFirstChild("BodyVelocity") then
+		local bv = Instance.new("BodyVelocity")
+		bv.Name = "FlyVelocity"
+		bv.Parent = hrp
+		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bv.Velocity = Vector3.new(0, 0, 0)
+	else
+		hrp.FlyVelocity.Velocity = Vector3.new(0, 0, 0)
+	end
+	
+	-- Tắt va chạm (NoClip)
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then part.CanCollide = false end
+	end
+end
+
+-- 2. Hàm xóa BodyVelocity khi tắt Auto
+local function StopFloat()
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("FlyVelocity") then
+		char.HumanoidRootPart.FlyVelocity:Destroy()
+	end
+end
+
+-- 3. Vòng lặp Farm chính (Gom quái + Đánh + Bay)
 spawn(function()
 	while true do
-		wait()
-		if _G.Settings.AutoFarmLevel or _G.Settings.AutoBone then
+		RunService.RenderStepped:Wait() -- Chạy theo khung hình để mượt nhất
+		
+		if _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone then
 			pcall(function()
-				local MyRoot = LocalPlayer.Character.HumanoidRootPart
-				
-				-- Tìm quái xung quanh (Ví dụ bán kính 300)
-				for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-					if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-						-- Kiểm tra khoảng cách
-						if (enemy.HumanoidRootPart.Position - MyRoot.Position).Magnitude < 350 then
-							
-							-- Gom quái lại (CFrame)
-							enemy.HumanoidRootPart.CFrame = MyRoot.CFrame * CFrame.new(0, 0, -5) -- Gom lại trước mặt
-							
-							-- Giữ cho nhân vật ở vị trí an toàn (Trên đầu quái 1 chút)
-							-- MyRoot.CFrame = CFrame.new(enemy.HumanoidRootPart.Position + Vector3.new(0, 10, 0)) 
-							
-							-- Làm đơ quái (Stun)
-							enemy.Humanoid.WalkSpeed = 0
-							enemy.Humanoid.JumpPower = 0
-							
-							-- Chỉ xử lý 1-2 con một lúc để tránh crash
+				-- Logic tìm quái (Mô phỏng đơn giản lấy quái gần nhất)
+				local target = nil
+				for _, v in pairs(workspace.Enemies:GetChildren()) do
+					if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+						if (v.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude < 350 then
+							target = v
+							break -- Lấy 1 con làm mục tiêu chính
 						end
 					end
 				end
+				
+				if target then
+					-- A. BAY TRÊN ĐẦU QUÁI (KHÔNG GIẬT)
+					NoClipAndFloat(target.HumanoidRootPart.CFrame)
+					
+					-- B. GOM QUÁI (MOB AURA)
+					-- Kéo các con quái khác lại gần con quái chính
+					for _, subEnemy in pairs(workspace.Enemies:GetChildren()) do
+						if subEnemy ~= target and subEnemy:FindFirstChild("HumanoidRootPart") and (subEnemy.HumanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude < 300 then
+							subEnemy.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+							subEnemy.Humanoid.WalkSpeed = 0
+							subEnemy.HumanoidRootPart.CanCollide = false
+						end
+					end
+					
+					-- C. ĐÁNH (FAST ATTACK: 20 hit/s logic)
+					-- Lưu ý: Logic đánh nằm ở vòng lặp riêng bên dưới để không ảnh hưởng tốc độ bay
+				end
 			end)
+		else
+			StopFloat() -- Tắt bay nếu không farm
 		end
 	end
 end)
 
--- LOGIC NHẬN DIỆN SEA (AUTO LEVEL)
+-- 4. Vòng lặp Đánh (Tách riêng để tối ưu)
 spawn(function()
-	while wait(2) do
-		if _G.Settings.AutoFarmLevel then
-			local level = LocalPlayer.Data.Level.Value
-			if level < 700 then
-				-- Code Sea 1: Tự động tìm Quest phù hợp với Level
-				-- print("Đang farm Sea 1...")
-			elseif level >= 700 and level < 1500 then
-				-- Code Sea 2
-				-- print("Đang farm Sea 2...")
-			elseif level >= 1500 then
-				-- Code Sea 3
-				-- print("Đang farm Sea 3...")
-			end
+	while true do
+		if _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone then
+			pcall(function()
+				-- Combo đánh 20 cái
+				for i = 1, 20 do
+					VirtualUser:CaptureController()
+					VirtualUser:Button1Down(Vector2.new(1280, 672))
+					wait(0.02) -- Tốc độ cực nhanh
+				end
+				wait(1.9) -- Nghỉ tránh ban
+			end)
+		else
+			wait(1)
 		end
 	end
 end)
-
