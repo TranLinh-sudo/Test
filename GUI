@@ -2,32 +2,37 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
+
+-- --- BIẾN TOÀN CỤC (SETTINGS) ---
+_G.Settings = {
+	WeaponMode = "Melee", -- Mặc định
+	AutoFarmLevel = false,
+	AutoFarmNear = false,
+	AutoBone = false,
+	AutoTradeBone = false,
+	AutoSoulReaper = false
+}
 
 -- Hàm bảo vệ UI
 local function getParent()
-	local success, result = pcall(function()
-		return CoreGui
-	end)
-	if success then
-		return result
-	else
-		return LocalPlayer:WaitForChild("PlayerGui")
-	end
+	local success, result = pcall(function() return CoreGui end)
+	if success then return result else return LocalPlayer:WaitForChild("PlayerGui") end
 end
 
 -- --- CẤU HÌNH MÀU SẮC ---
 local Colors = {
 	Background = Color3.fromRGB(20, 20, 20),
 	Sidebar = Color3.fromRGB(15, 15, 15),
-	ItemBG = Color3.fromRGB(30, 30, 30),
+	ItemBG = Color3.fromRGB(35, 35, 35),
 	Text = Color3.fromRGB(255, 255, 255),
-	Accent = Color3.fromRGB(255, 215, 0), -- Màu vàng
+	Accent = Color3.fromRGB(255, 215, 0), -- Vàng
 	Close = Color3.fromRGB(200, 50, 50),
-	Green = Color3.fromRGB(50, 200, 50) -- Màu xanh cho tiền
+	ToggleOn = Color3.fromRGB(0, 200, 100), -- Xanh lá khi bật
+	ToggleOff = Color3.fromRGB(60, 60, 60)
 }
 
--- --- DANH SÁCH TÊN TAB ---
 local TabNames = {
 	"Trạng thái", "Fam", "Biển", "item", "trái & tập kích", 
 	"cửa hàng", "Di chuyển", "Tộc V4", "Núi lửa", 
@@ -36,11 +41,11 @@ local TabNames = {
 
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_Status"
+ScreenGui.Name = "BananaCatHub_Tab2_Fam"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- ICON TOGGLE
+-- ICON
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Parent = ScreenGui
 OpenButton.BackgroundColor3 = Colors.Background
@@ -50,10 +55,13 @@ OpenButton.Image = "rbxassetid://13693489228"
 OpenButton.Visible = true
 Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", OpenButton).Color = Colors.Accent
-OpenButton.UIStroke.Thickness = 2
+OpenButton.MouseButton1Click:Connect(function() 
+    ScreenGui.MainFrame.Visible = not ScreenGui.MainFrame.Visible 
+end)
 
 -- MAIN FRAME
 local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Colors.Background
 MainFrame.BackgroundTransparency = 0.1
@@ -62,8 +70,6 @@ MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) 
 MainFrame.ClipsDescendants = true 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-
-OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
 
 -- TOP BAR
 local TopBar = Instance.new("Frame")
@@ -78,7 +84,7 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Status Update"
+HeaderTitle.Text = "Banana Cat Hub - Tab Fam Vip"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -93,17 +99,6 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
-local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Parent = TopBar
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -12)
-MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
-MinimizeBtn.Text = "-"
-MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
-MinimizeBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
 
 -- LAYOUT
 local Sidebar = Instance.new("Frame")
@@ -130,10 +125,10 @@ ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0.25, 10, 0, 50)
 ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
--- --- LOGIC TAB ---
 local Pages = {} 
 local currentTab = nil
 
+-- --- HÀM TẠO CƠ BẢN ---
 local function CreateTab(name)
 	local Page = Instance.new("ScrollingFrame")
 	Page.Name = name .. "_Page"
@@ -142,6 +137,7 @@ local function CreateTab(name)
 	Page.Size = UDim2.new(1, 0, 1, 0)
 	Page.ScrollBarThickness = 4
 	Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Page.ScrollingDirection = Enum.ScrollingDirection.Y
 	Page.Visible = false
 	Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
 
@@ -185,121 +181,262 @@ end
 
 for _, name in ipairs(TabNames) do CreateTab(name) end
 
--- --- HÀM TẠO MỤC HIỂN THỊ TRẠNG THÁI (STATUS LABEL) ---
-local function CreateStatusItem(tabName, labelText, getValueFunc)
-	local page = Pages[tabName]
-	if not page then return end
+-- --- HÀM UI NÂNG CAO (CHO TAB FAM) ---
 
-	local ItemFrame = Instance.new("Frame")
-	ItemFrame.Parent = page
-	ItemFrame.BackgroundColor3 = Colors.ItemBG
-	ItemFrame.BackgroundTransparency = 0.5
-	ItemFrame.Size = UDim2.new(1, -10, 0, 40)
-	Instance.new("UICorner", ItemFrame).CornerRadius = UDim.new(0, 6)
-	
-	-- Nhãn (Ví dụ: "Tộc :")
-	local Label = Instance.new("TextLabel")
-	Label.Parent = ItemFrame
-	Label.BackgroundTransparency = 1
-	Label.Position = UDim2.new(0, 15, 0, 0)
-	Label.Size = UDim2.new(0.4, 0, 1, 0)
-	Label.Font = Enum.Font.GothamSemibold
-	Label.Text = labelText
-	Label.TextColor3 = Colors.Text
-	Label.TextSize = 14
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	
-	-- Giá trị (Ví dụ: "Human")
-	local ValueLabel = Instance.new("TextLabel")
-	ValueLabel.Parent = ItemFrame
-	ValueLabel.BackgroundTransparency = 1
-	ValueLabel.Position = UDim2.new(0.4, 0, 0, 0)
-	ValueLabel.Size = UDim2.new(0.6, -15, 1, 0)
-	ValueLabel.Font = Enum.Font.GothamBold
-	ValueLabel.Text = "Loading..."
-	ValueLabel.TextColor3 = Colors.Accent -- Màu vàng
-	ValueLabel.TextSize = 14
-	ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+-- 1. DROPDOWN (Menu chọn chế độ)
+local function CreateDropdown(parentPage, title, options, callback)
+	local Frame = Instance.new("Frame")
+	Frame.Parent = parentPage
+	Frame.BackgroundColor3 = Colors.ItemBG
+	Frame.BackgroundTransparency = 0.5
+	Frame.Size = UDim2.new(1, -10, 0, 45) -- Mặc định đóng
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+	Frame.ClipsDescendants = true
 
-	-- Cập nhật giá trị liên tục
-	spawn(function()
-		while ItemFrame.Parent do -- Chỉ chạy khi GUI còn tồn tại
-			local success, val = pcall(getValueFunc)
-			if success and val then
-				ValueLabel.Text = tostring(val)
-			else
-				ValueLabel.Text = "N/A"
-			end
-			wait(1) -- Cập nhật mỗi 1 giây
+	local Title = Instance.new("TextLabel")
+	Title.Parent = Frame
+	Title.Text = title .. ": " .. options[1] -- Hiển thị cái đầu tiên
+	Title.Font = Enum.Font.GothamBold
+	Title.TextSize = 13
+	Title.TextColor3 = Colors.Text
+	Title.Size = UDim2.new(1, -30, 0, 45)
+	Title.Position = UDim2.new(0, 15, 0, 0)
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.BackgroundTransparency = 1
+
+	local OpenBtn = Instance.new("TextButton")
+	OpenBtn.Parent = Frame
+	OpenBtn.Size = UDim2.new(1, 0, 0, 45)
+	OpenBtn.BackgroundTransparency = 1
+	OpenBtn.Text = ""
+
+	local isOpen = false
+	local currentHeight = 45
+
+	OpenBtn.MouseButton1Click:Connect(function()
+		isOpen = not isOpen
+		if isOpen then
+			Frame.Size = UDim2.new(1, -10, 0, 45 + (#options * 35))
+		else
+			Frame.Size = UDim2.new(1, -10, 0, 45)
 		end
+	end)
+
+	for i, opt in ipairs(options) do
+		local OptionBtn = Instance.new("TextButton")
+		OptionBtn.Parent = Frame
+		OptionBtn.BackgroundColor3 = Colors.Sidebar
+		OptionBtn.Size = UDim2.new(1, -20, 0, 30)
+		OptionBtn.Position = UDim2.new(0, 10, 0, 45 + ((i-1)*35))
+		OptionBtn.Text = opt
+		OptionBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+		OptionBtn.Font = Enum.Font.Gotham
+		Instance.new("UICorner", OptionBtn).CornerRadius = UDim.new(0, 4)
+
+		OptionBtn.MouseButton1Click:Connect(function()
+			Title.Text = title .. ": " .. opt
+			Frame.Size = UDim2.new(1, -10, 0, 45) -- Đóng lại khi chọn
+			isOpen = false
+			callback(opt)
+		end)
+	end
+end
+
+-- 2. TOGGLE (Ô vuông bật tắt)
+local function CreateToggle(parentPage, text, settingKey, callback)
+	local Frame = Instance.new("Frame")
+	Frame.Parent = parentPage
+	Frame.BackgroundColor3 = Colors.ItemBG
+	Frame.BackgroundTransparency = 0.5
+	Frame.Size = UDim2.new(1, -10, 0, 40)
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+
+	local Label = Instance.new("TextLabel")
+	Label.Parent = Frame
+	Label.Text = text
+	Label.Font = Enum.Font.GothamSemibold
+	Label.TextSize = 13
+	Label.TextColor3 = Colors.Text
+	Label.Size = UDim2.new(0.7, 0, 1, 0)
+	Label.Position = UDim2.new(0, 15, 0, 0)
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.BackgroundTransparency = 1
+
+	-- Ô vuông (Checkbox)
+	local ToggleBtn = Instance.new("TextButton")
+	ToggleBtn.Parent = Frame
+	ToggleBtn.Position = UDim2.new(1, -50, 0.5, -12)
+	ToggleBtn.Size = UDim2.new(0, 24, 0, 24)
+	ToggleBtn.BackgroundColor3 = Colors.ToggleOff
+	ToggleBtn.Text = ""
+	Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 4)
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Parent = ToggleBtn
+	Stroke.Color = Color3.fromRGB(100, 100, 100)
+	Stroke.Thickness = 1.5
+
+	ToggleBtn.MouseButton1Click:Connect(function()
+		_G.Settings[settingKey] = not _G.Settings[settingKey]
+		local state = _G.Settings[settingKey]
+		
+		if state then
+			ToggleBtn.BackgroundColor3 = Colors.ToggleOn
+			Stroke.Color = Colors.ToggleOn
+		else
+			ToggleBtn.BackgroundColor3 = Colors.ToggleOff
+			Stroke.Color = Color3.fromRGB(100, 100, 100)
+		end
+		
+		if callback then callback(state) end
 	end)
 end
 
--- --- THÊM NỘI DUNG VÀO TAB 1: TRẠNG THÁI ---
-local TabStatus = "Trạng thái"
-
--- 1. Tên nhân vật
-CreateStatusItem(TabStatus, "Tên nhân vật :", function()
-	return LocalPlayer.DisplayName .. " (@" .. LocalPlayer.Name .. ")"
-end)
-
--- 2. Tộc (Race)
-CreateStatusItem(TabStatus, "Tộc :", function()
-	-- Thử lấy dữ liệu từ Data của Blox Fruit, nếu không có thì lấy Custom
-	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Race") then
-		return LocalPlayer.Data.Race.Value
-	end
-	return "Human (Check Data)" -- Fallback nếu không tìm thấy
-end)
-
--- 3. Beli (Tiền)
-CreateStatusItem(TabStatus, "Beli :", function()
-	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Beli") then
-		-- Format tiền tệ (ví dụ: 1,000,000)
-		local money = LocalPlayer.Data.Beli.Value
-		local formatted = tostring(money):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
-		return formatted .. " $"
-	end
-	return "0 $"
-end)
-
--- 4. Điểm F (Fragments)
-CreateStatusItem(TabStatus, "Điểm F :", function()
-	if LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Fragments") then
-		local frag = LocalPlayer.Data.Fragments.Value
-		local formatted = tostring(frag):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
-		return formatted
-	end
-	return "0"
-end)
-
--- 5. Thời gian Server
-CreateStatusItem(TabStatus, "Thời gian hoạt động :", function()
-	local seconds = workspace.DistributedGameTime
-	local hours = math.floor(seconds / 3600)
-	local minutes = math.floor((seconds % 3600) / 60)
-	local secs = math.floor(seconds % 60)
-	return string.format("%02d:%02d:%02d", hours, minutes, secs)
-end)
-
--- --- LOGIC KÉO THẢ ---
-local dragging, dragInput, dragStart, startPos
-local function update(input)
-	local delta = input.Position - dragStart
-	MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+-- 3. LABEL (Tiêu đề phân đoạn)
+local function CreateSection(parentPage, text)
+	local Label = Instance.new("TextLabel")
+	Label.Parent = parentPage
+	Label.Text = "--- " .. text .. " ---"
+	Label.Font = Enum.Font.GothamBold
+	Label.TextSize = 14
+	Label.TextColor3 = Colors.Accent
+	Label.Size = UDim2.new(1, 0, 0, 30)
+	Label.BackgroundTransparency = 1
+	Label.TextXAlignment = Enum.TextXAlignment.Center
 end
 
-MainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
-		input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+-- --- [PHẦN QUAN TRỌNG] LOGIC TAB 2: FAM ---
+local FamPage = Pages["Fam"]
+
+if FamPage then
+	-- A. CHỌN CHẾ ĐỘ VŨ KHÍ
+	CreateDropdown(FamPage, "Chế độ Fam", {"Melee", "Sword", "Fruit"}, function(selected)
+		_G.Settings.WeaponMode = selected
+		print("Đã chọn vũ khí: " .. selected)
+	end)
+
+	-- B. AUTO LEVEL
+	CreateSection(FamPage, "Auto Level (Theo Sea)")
+	
+	CreateToggle(FamPage, "Auto Farm Level (Tự nhận Sea 1-3)", "AutoFarmLevel", function(state)
+		if state then
+			print("Bắt đầu Auto Farm Level...")
+			-- Kích hoạt vòng lặp Farm (Xem hàm logic bên dưới)
+		else
+			print("Dừng Auto Farm Level")
+		end
+	end)
+
+	-- C. AUTO FARM QUÁI GẦN
+	CreateSection(FamPage, "Farm Quái Gần")
+	CreateToggle(FamPage, "Auto Farm Nearest", "AutoFarmNear", function(state)
+		-- Logic Farm gần
+	end)
+
+	-- D. FAM XƯƠNG (HAUNTED CASTLE)
+	CreateSection(FamPage, "Fam Xương & Boss")
+	
+	CreateToggle(FamPage, "Auto Fam Xương", "AutoBone", function(state)
+		-- Logic Farm tại Lâu đài bóng tối
+	end)
+
+	CreateToggle(FamPage, "Auto Đổi Xương (Random)", "AutoTradeBone", function(state)
+		spawn(function()
+			while _G.Settings.AutoTradeBone do
+				pcall(function()
+					-- Giả lập gọi RemoteEvent đổi xương
+					game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+				end)
+				wait(3) -- Đổi mỗi 3 giây
+			end
+		end)
+	end)
+
+	CreateToggle(FamPage, "Auto Soul Reaper (Triệu hồi)", "AutoSoulReaper", function(state)
+		-- Logic kiểm tra Hallowed Essence và triệu hồi
+	end)
+end
+
+
+-- --- [ENGINE] LOGIC FARM (PHẦN XỬ LÝ NGẦM) ---
+-- Đây là phần xử lý đánh 20 cái nghỉ 1.9s và gom quái
+spawn(function()
+	while true do
+		wait()
+		if _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone then
+			
+			-- 1. GIẢ LẬP ĐÁNH NHANH (Fast Attack)
+			-- Logic: Đánh 20 lần trong 1s -> Nghỉ 1.9s
+			pcall(function()
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
+					-- Bắt đầu chuỗi combo 20 hit
+					for i = 1, 20 do
+						if not (_G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear or _G.Settings.AutoBone) then break end
+						
+						-- Giả lập click chuột hoặc gọi Remote combat
+						VirtualUser:CaptureController()
+						VirtualUser:Button1Down(Vector2.new(1280, 672))
+						
+						-- Tốc độ siêu nhanh (20 hit / giây = 0.05s mỗi hit)
+						wait(0.05) 
+					end
+					
+					-- 2. NGHỈ TRÁNH BAN (Anti-Ban)
+					wait(1.9)
+				end
+			end)
+		end
 	end
 end)
 
-MainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		if dragging then update(input) end
+-- LOGIC GOM QUÁI (MAGENET) & KHOẢNG CÁCH (DISTANCE)
+spawn(function()
+	while true do
+		wait()
+		if _G.Settings.AutoFarmLevel or _G.Settings.AutoBone then
+			pcall(function()
+				local MyRoot = LocalPlayer.Character.HumanoidRootPart
+				
+				-- Tìm quái xung quanh (Ví dụ bán kính 300)
+				for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+					if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+						-- Kiểm tra khoảng cách
+						if (enemy.HumanoidRootPart.Position - MyRoot.Position).Magnitude < 350 then
+							
+							-- Gom quái lại (CFrame)
+							enemy.HumanoidRootPart.CFrame = MyRoot.CFrame * CFrame.new(0, 0, -5) -- Gom lại trước mặt
+							
+							-- Giữ cho nhân vật ở vị trí an toàn (Trên đầu quái 1 chút)
+							-- MyRoot.CFrame = CFrame.new(enemy.HumanoidRootPart.Position + Vector3.new(0, 10, 0)) 
+							
+							-- Làm đơ quái (Stun)
+							enemy.Humanoid.WalkSpeed = 0
+							enemy.Humanoid.JumpPower = 0
+							
+							-- Chỉ xử lý 1-2 con một lúc để tránh crash
+						end
+					end
+				end
+			end)
+		end
 	end
 end)
+
+-- LOGIC NHẬN DIỆN SEA (AUTO LEVEL)
+spawn(function()
+	while wait(2) do
+		if _G.Settings.AutoFarmLevel then
+			local level = LocalPlayer.Data.Level.Value
+			if level < 700 then
+				-- Code Sea 1: Tự động tìm Quest phù hợp với Level
+				-- print("Đang farm Sea 1...")
+			elseif level >= 700 and level < 1500 then
+				-- Code Sea 2
+				-- print("Đang farm Sea 2...")
+			elseif level >= 1500 then
+				-- Code Sea 3
+				-- print("Đang farm Sea 3...")
+			end
+		end
+	end
+end)
+
