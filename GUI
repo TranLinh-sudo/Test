@@ -28,46 +28,50 @@ local Colors = {
 
 -- --- TẠO GUI CHÍNH ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_V2"
+ScreenGui.Name = "BananaCatHub_V3"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- 1. NÚT MỞ MENU (ICON TOGGLE)
--- Nút này hiện khi ẩn script, bấm vào để mở lại
+-- 1. NÚT MỞ MENU (ICON TOGGLE) - LUÔN HIỆN
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Parent = ScreenGui
 OpenButton.BackgroundColor3 = Colors.Background
-OpenButton.Position = UDim2.new(0.1, 0, 0.1, 0) -- Vị trí góc trên trái
+OpenButton.Position = UDim2.new(0.02, 0, 0.15, 0) -- Góc trái, hơi thấp xuống chút
 OpenButton.Size = UDim2.new(0, 50, 0, 50)
-OpenButton.Visible = false -- Mặc định ẩn vì Menu đang mở
-OpenButton.Image = "rbxassetid://13693489228" -- ID ảnh Banana Cat (Hoặc thay ảnh khác)
+OpenButton.Visible = true -- <--- LUÔN LUÔN HIỆN
+OpenButton.Image = "rbxassetid://13693489228" -- Hình Banana Cat
+OpenButton.ZIndex = 10 -- Đảm bảo nút này luôn nổi lên trên cùng
 
 local OpenBtnCorner = Instance.new("UICorner")
-OpenBtnCorner.CornerRadius = UDim.new(1, 0) -- Bo tròn thành hình tròn
+OpenBtnCorner.CornerRadius = UDim.new(1, 0) -- Hình tròn
 OpenBtnCorner.Parent = OpenButton
 
-local OpenStroke = Instance.new("UIStroke") -- Viền vàng cho nút mở
+local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Parent = OpenButton
 OpenStroke.Color = Colors.Accent
 OpenStroke.Thickness = 2
 
--- 2. KHUNG CHÍNH (MAIN FRAME) - CHIẾM 75% MÀN HÌNH
+-- 2. KHUNG CHÍNH (MAIN FRAME) - CHIẾM 75%
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Colors.Background
 MainFrame.BackgroundTransparency = 0.1
--- Căn giữa và chiếm 75%
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5) 
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) -- 75% Chiều rộng và Cao
+MainFrame.Size = UDim2.new(0.75, 0, 0.75, 0) 
 MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true -- Cắt bớt phần thừa nếu cần
+MainFrame.ClipsDescendants = true 
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
+
+-- --- LOGIC BẬT/TẮT TỪ ICON ---
+OpenButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible -- Tự động đảo trạng thái (Bật <-> Tắt)
+end)
 
 -- --- THANH TIÊU ĐỀ & NÚT ĐIỀU KHIỂN ---
 local TopBar = Instance.new("Frame")
@@ -85,15 +89,15 @@ HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
 HeaderTitle.Text = "Banana Cat Hub - Blox Fruit"
 HeaderTitle.TextColor3 = Colors.Accent
-HeaderTitle.TextSize = 18 -- Chữ to hơn chút để phù hợp khung lớn
+HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- NÚT TẮT (X)
+-- NÚT TẮT HẲN (X)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Name = "CloseBtn"
 CloseBtn.Parent = TopBar
 CloseBtn.BackgroundColor3 = Colors.Close
-CloseBtn.Position = UDim2.new(1, -35, 0.5, -12) -- Góc phải
+CloseBtn.Position = UDim2.new(1, -35, 0.5, -12)
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Text = "X"
@@ -109,7 +113,7 @@ local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.Parent = TopBar
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -12) -- Bên cạnh nút X
+MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -12)
 MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.Text = "-"
@@ -120,22 +124,13 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 6)
 MinCorner.Parent = MinimizeBtn
 
--- --- LOGIC CÁC NÚT ---
--- Logic tắt hoàn toàn
+-- --- LOGIC CÁC NÚT ĐIỀU KHIỂN ---
 CloseBtn.MouseButton1Click:Connect(function()
-	ScreenGui:Destroy()
+	ScreenGui:Destroy() -- Xóa hoàn toàn GUI (bao gồm cả Icon)
 end)
 
--- Logic ẩn script (Thu nhỏ)
 MinimizeBtn.MouseButton1Click:Connect(function()
-	MainFrame.Visible = false
-	OpenButton.Visible = true -- Hiện nút mở
-end)
-
--- Logic mở script (Từ nút icon)
-OpenButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = true
-	OpenButton.Visible = false -- Ẩn nút mở
+	MainFrame.Visible = false -- Chỉ ẩn khung chính, Icon vẫn còn
 end)
 
 -- --- SIDEBAR (THANH BÊN) ---
@@ -144,8 +139,8 @@ Sidebar.Name = "Sidebar"
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Colors.Sidebar
 Sidebar.BackgroundTransparency = 0.5
-Sidebar.Position = UDim2.new(0, 0, 0, 40) -- Nằm dưới TopBar
-Sidebar.Size = UDim2.new(0.25, 0, 1, -40) -- Chiếm 25% chiều ngang khung
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.Size = UDim2.new(0.25, 0, 1, -40)
 Sidebar.BorderSizePixel = 0
 
 -- --- CONTENT (NỘI DUNG) ---
@@ -153,10 +148,10 @@ local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
 ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundTransparency = 1
-ContentContainer.Position = UDim2.new(0.25, 10, 0, 50) -- Lệch sang phải 25% + padding
+ContentContainer.Position = UDim2.new(0.25, 10, 0, 50)
 ContentContainer.Size = UDim2.new(0.75, -20, 1, -60)
 
--- --- HỆ THỐNG TAB & CHỨC NĂNG (GIỮ NGUYÊN LOGIC CŨ) ---
+-- --- HỆ THỐNG TAB & ITEM (GIỮ NGUYÊN) ---
 local TabList = Instance.new("ScrollingFrame")
 TabList.Name = "TabList"
 TabList.Parent = Sidebar
@@ -172,7 +167,6 @@ TabListLayout.Padding = UDim.new(0, 5)
 
 local currentTab = nil
 
--- Hàm tạo Tab
 local function CreateTab(name)
 	local Page = Instance.new("ScrollingFrame")
 	Page.Name = name .. "_Page"
@@ -216,7 +210,6 @@ local function CreateTab(name)
 	return Page
 end
 
--- Hàm tạo Nút chức năng
 local function CreateItem(parentPage, text, callback)
 	local ItemFrame = Instance.new("Frame")
 	ItemFrame.Parent = parentPage
@@ -258,15 +251,16 @@ local function CreateItem(parentPage, text, callback)
 	end)
 end
 
--- --- THÊM CÁC TAB VÍ DỤ ---
+-- --- VÍ DỤ NỘI DUNG ---
 local Tab1 = CreateTab("Misc Shop")
 local Tab2 = CreateTab("Auto Farm")
 
-CreateItem(Tab1, "Redeem Code", function() print("Redeemed") end)
+CreateItem(Tab1, "Redeem Code", function() print("Code Redeemed") end)
 CreateItem(Tab1, "Teleport Old World", function() print("TP Old World") end)
-CreateItem(Tab2, "Auto Farm Level", function() print("Farming...") end)
+CreateItem(Tab2, "Auto Farm Level", function() print("Farming Started") end)
 
--- --- KÉO THẢ CHO MAIN FRAME ---
+-- --- KÉO THẢ (DRAG) ---
+-- 1. Kéo thả cho Main Frame
 local dragging, dragInput, dragStart, startPos
 local function update(input)
 	local delta = input.Position - dragStart
@@ -290,25 +284,24 @@ MainFrame.InputChanged:Connect(function(input)
 	end
 end)
 
--- --- KÉO THẢ CHO NÚT OPEN (ICON) ---
--- Để bạn di chuyển nút bật mở đi chỗ khác cho đỡ vướng
-local dragBtn, startBtnPos
+-- 2. Kéo thả cho Icon (Để di chuyển Icon đi chỗ khác)
+local draggingIcon, dragStartIcon, startPosIcon
 OpenButton.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startBtnPos = OpenButton.Position
+		draggingIcon = true
+		dragStartIcon = input.Position
+		startPosIcon = OpenButton.Position
 		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			if input.UserInputState == Enum.UserInputState.End then draggingIcon = false end
 		end)
 	end
 end)
 
 OpenButton.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		if dragging then
-			local delta = input.Position - dragStart
-			OpenButton.Position = UDim2.new(startBtnPos.X.Scale, startBtnPos.X.Offset + delta.X, startBtnPos.Y.Scale, startBtnPos.Y.Offset + delta.Y)
+		if draggingIcon then
+			local delta = input.Position - dragStartIcon
+			OpenButton.Position = UDim2.new(startPosIcon.X.Scale, startPosIcon.X.Offset + delta.X, startPosIcon.Y.Scale, startPosIcon.Y.Offset + delta.Y)
 		end
 	end
 end)
