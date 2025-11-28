@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local VirtualUser = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
 
 -- --- CÀI ĐẶT CHUNG ---
@@ -14,8 +15,8 @@ _G.Settings = {
 	AutoBone = false,
 	AutoTradeBone = false,
 	AutoSoulReaper = false,
-	Distance = 20, -- Cách quái 20m
-	AutoHaki = true -- Mặc định bật
+	Distance = 20, -- Giữ nguyên 20m theo ý bạn
+	AutoHaki = true
 }
 
 -- Hàm bảo vệ UI
@@ -38,7 +39,7 @@ local Colors = {
 
 -- --- TẠO GUI ---
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BananaCatHub_FixAttack"
+ScreenGui.Name = "BananaCatHub_AttackFix_V2"
 ScreenGui.Parent = getParent()
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -81,7 +82,7 @@ HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
 HeaderTitle.Size = UDim2.new(0.6, 0, 1, 0)
 HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "Banana Cat Hub - Auto Haki Fix"
+HeaderTitle.Text = "Banana Cat Hub - Fix Attack"
 HeaderTitle.TextColor3 = Colors.Accent
 HeaderTitle.TextSize = 18
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -346,16 +347,15 @@ CreateToggle("Fam", "Auto Fam Xương (20m Safe)", "AutoBone")
 CreateToggle("Fam", "Auto Đổi Xương", "AutoTradeBone")
 CreateToggle("Fam", "Auto Soul Reaper", "AutoSoulReaper")
 
--- --- [CORE ENGINE] LOGIC QUAN TRỌNG ---
+-- --- [CORE ENGINE] LOGIC FIX LỖI ---
 
--- 1. [FIX] AUTO HAKI
+-- 1. [FIX] AUTO HAKI (Chạy ngay khi bật)
 spawn(function()
 	while true do
-		wait(5) -- Check mỗi 5s
+		wait(3)
 		if _G.Settings.AutoHaki then
 			pcall(function()
-				local hasBuso = LocalPlayer.Character:FindFirstChild("HasBuso")
-				if not hasBuso then
+				if not LocalPlayer.Character:FindFirstChild("HasBuso") then
 					ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
 				end
 			end)
@@ -363,21 +363,18 @@ spawn(function()
 	end
 end)
 
--- 2. [FIX] AUTO EQUIP WEAPON (Tự cầm vũ khí)
+-- 2. [FIX] AUTO EQUIP WEAPON (Cầm vũ khí chắc chắn)
 local function EquipWeapon()
 	pcall(function()
 		local backpack = LocalPlayer.Backpack
 		local char = LocalPlayer.Character
-		local weaponName = _G.Settings.WeaponMode -- "Melee", "Sword", "Fruit"
+		local weaponName = _G.Settings.WeaponMode
 		
-		-- Logic tìm vũ khí đơn giản trong Blox Fruit
 		for _, tool in pairs(backpack:GetChildren()) do
 			if tool:IsA("Tool") then
-				if weaponName == "Melee" and tool.ToolTip == "Melee" then
-					char.Humanoid:EquipTool(tool)
-				elseif weaponName == "Sword" and tool.ToolTip == "Sword" then
-					char.Humanoid:EquipTool(tool)
-				elseif weaponName == "Fruit" and tool.ToolTip == "Blox Fruit" then
+				if (weaponName == "Melee" and tool.ToolTip == "Melee") or
+				   (weaponName == "Sword" and tool.ToolTip == "Sword") or
+				   (weaponName == "Fruit" and tool.ToolTip == "Blox Fruit") then
 					char.Humanoid:EquipTool(tool)
 				end
 			end
@@ -385,12 +382,13 @@ local function EquipWeapon()
 	end)
 end
 
--- 3. LOGIC DI CHUYỂN & GOM QUÁI
+-- 3. LOGIC DI CHUYỂN
 local function LockPosition(targetCFrame)
 	local char = LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 	local hrp = char.HumanoidRootPart
 	
+	-- Bay cách 20m
 	hrp.CFrame = targetCFrame * CFrame.new(0, _G.Settings.Distance, 0)
 	
 	if not hrp:FindFirstChild("AntiFall") then
@@ -424,21 +422,18 @@ spawn(function()
 	while true do
 		RunService.RenderStepped:Wait()
 		
-		-- Chỉ chạy khi có 1 chế độ bật
 		if _G.Settings.AutoBone or _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear then
 			pcall(function()
-				EquipWeapon() -- [QUAN TRỌNG] Cầm vũ khí trước
+				EquipWeapon() -- Luôn cầm vũ khí
 				
 				local target = nil
 				local myPos = LocalPlayer.Character.HumanoidRootPart.Position
 				
-				-- Logic tìm quái
+				-- Tìm mục tiêu
 				for _, enemy in pairs(workspace.Enemies:GetChildren()) do
 					if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-						-- Auto Bone: Chỉ lấy quái xương
 						if _G.Settings.AutoBone and IsBoneMob(enemy.Name) then
 							target = enemy; break
-						-- Auto Farm Level/Near: Lấy quái gần nhất
 						elseif (_G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear) and (enemy.HumanoidRootPart.Position - myPos).Magnitude < 1000 then
 							target = enemy; break
 						end
@@ -466,24 +461,27 @@ spawn(function()
 	end
 end)
 
--- 4. [FIX] LOGIC ĐÁNH (ATTACK)
+-- 4. [FIX] LOGIC ĐÁNH MẠNH HƠN (REMOTE ATTACK)
 spawn(function()
 	while true do
 		if _G.Settings.AutoBone or _G.Settings.AutoFarmLevel or _G.Settings.AutoFarmNear then
 			pcall(function()
-				-- Cách 1: VirtualUser
+				-- 1. Click giả lập
 				VirtualUser:CaptureController()
 				VirtualUser:Button1Down(Vector2.new(1280, 672))
 				
-				-- Cách 2: Kích hoạt tool trực tiếp (Fix lỗi ko đánh)
+				-- 2. Activate Tool
 				local char = LocalPlayer.Character
 				if char then
 					local tool = char:FindFirstChildOfClass("Tool")
 					if tool then tool:Activate() end
 				end
+				
+				-- 3. [MỚI] Gửi Remote Event đánh (Sửa lỗi đứng xa không đánh)
+				ReplicatedStorage.Remotes.CommF_:InvokeServer("LocalClick")
 			end)
 		end
-		RunService.Heartbeat:Wait() -- Fast Attack
+		RunService.Heartbeat:Wait()
 	end
 end)
 
