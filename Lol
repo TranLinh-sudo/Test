@@ -4,7 +4,7 @@ Configuration = {
 HopWhenIdle = true,
 AutoHop = true,
 AutoHopDelay = 60 * 60,
-FpsBoost = true,
+FpsBoost = false,
 BlackScreen = true
 },
 Items = {
@@ -14,7 +14,7 @@ AutoFullyMelees = true,
 Saber = true,
 CursedDualKatana = true,
 -- Guns
-SoulGuitar = false,
+SoulGuitar = true,
 -- Upgrades
 RaceV2 = true
 },
