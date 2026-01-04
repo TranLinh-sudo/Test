@@ -1,0 +1,394 @@
+--[[
+    ============================================================
+    PROJECT: KAITUN SEA 1 - GOD TIER
+    DEVELOPER: GEMINI (SENIOR IT EXPERT)
+    VERSION: 9.0 (SMART EXP CODES + DUAL FARM + NO DELAY)
+    ============================================================
+]]
+
+-- [1] SERVICES
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local VirtualUser = game:GetService("VirtualUser")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = Players.LocalPlayer
+
+-- [2] CONFIGURATION
+local SETTINGS = {
+    FlySpeed = 330,             
+    FarmDistance = 25,          
+    BringMobRadius = 350,       
+    AutoStats = true,
+    Sea2Level = 700,
+    MasteryTarget = 300,
+    FastFarmSky_Lv1_100 = true, 
+    AutoRandomFruit = true,
+    SmartQuestSwitch = true,
+    AutoInputCode = true,       -- Bật nhập code
+    CodeInterval = 1200         -- Thời gian chờ giữa các code EXP (1200s = 20 phút)
+}
+
+-- [3] DATA: CODES LIST (ĐÃ CẬP NHẬT MỚI NHẤT)
+
+-- Loại 1: Code dùng 1 lần (Reset Stats, Money, Title) - Chạy ngay khi vào game
+local MISC_CODES = {
+    "KITT_RESET", "Sub2GamerRobot_RESET1", "Sub2UncleKizaru", "Fudd10", "Bignews", "Fudd10_v2"
+}
+
+-- Loại 2: Code x2 EXP - Dùng lần lượt từng cái mỗi 20 phút
+local EXP_CODES = {
+    "Sub2CaptainMaui", "DEVSCOOKING", "JCWK", "Starcodeheo", "Bluxxy", 
+    "Sub2Fer999", "Enyu_is_Pro", "Magicbus", "Sub2GamerRobot_EXP1", 
+    "THEGREATACE", "StrawHatMaine", "Sub2OfficialNoobie", "TantaiGaming", 
+    "Axiore", "KittGaming"
+}
+
+-- [4] DATA: LISTS
+local MELEE_LIST = {
+    {Name = "Combat", Price = 0, Remote = nil},
+    {Name = "Dark Step", Price = 150000, Remote = "BuyBlackLeg"},
+    {Name = "Electro", Price = 500000, Remote = "BuyElectro"},
+    {Name = "Water Kung Fu", Price = 750000, Remote = "BuyFishmanKarate"}
+}
+
+local QUEST_DATA = {
+    {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
+    {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
+    {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
+    {Min=30, Max=40, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=1, Mob="Pirate"},
+    {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"},
+    {Min=60, Max=75, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=1, Mob="Desert Bandit"},
+    {Min=75, Max=90, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=2, Mob="Desert Officer"},
+    {Min=90, Max=105, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=1, Mob="Snow Bandit"},
+    {Min=105, Max=120, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=2, Mob="Snowman"},
+    {Min=120, Max=150, Npc="Marine Quest Giver", Quest="MarineQuest2", Idx=1, Mob="Chief Petty Officer"},
+    {Min=150, Max=175, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=1, Mob="Sky Bandit"},
+    {Min=175, Max=190, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=2, Mob="Dark Master"},
+    {Min=190, Max=210, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=1, Mob="Prisoner"},
+    {Min=210, Max=230, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=2, Mob="Dangerous Prisoner"},
+    {Min=230, Max=250, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=1, Mob="Toga Warrior"},
+    {Min=250, Max=300, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=2, Mob="Gladiator"},
+    {Min=300, Max=330, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=1, Mob="Military Soldier"},
+    {Min=330, Max=375, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=2, Mob="Military Spy"},
+    {Min=375, Max=400, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=1, Mob="Fishman Warrior"},
+    {Min=400, Max=450, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=2, Mob="Fishman Commando"},
+    {Min=450, Max=475, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=1, Mob="God's Guard"},
+    {Min=475, Max=525, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=2, Mob="Shanda"},
+    {Min=525, Max=550, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=1, Mob="Royal Squad"},
+    {Min=550, Max=625, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=2, Mob="Royal Soldier"},
+    {Min=625, Max=650, Npc="Galley Captain", Quest="FountainQuest", Idx=1, Mob="Galley Pirate"},
+    {Min=650, Max=700, Npc="Galley Captain", Quest="FountainQuest", Idx=2, Mob="Galley Captain"},
+}
+
+local SABER = {
+    Buttons = {CFrame.new(4834, 7, 719), CFrame.new(4870, 5, 743), CFrame.new(4461, 11, 1215), CFrame.new(4545, 6, 1184), CFrame.new(4520, 12, 1173)},
+    Torch = CFrame.new(4882, 5, 723), DesertHouse = CFrame.new(1109, 6, 4363),
+    Cup = CFrame.new(1114, 7, 4365), CaveLeak = CFrame.new(6145, 25, 1417),
+    SickMan = CFrame.new(6117, 25, 1344), RichMan = CFrame.new(-853, 73, 4774),
+    MobLeader = CFrame.new(-920, 15, 5452), ShanksDoor = CFrame.new(4877, 6, 720)
+}
+
+-- [5] CORE FUNCTIONS
+local function CommF(...) return ReplicatedStorage.Remotes.CommF_:InvokeServer(...) end
+
+local function HasItem(name)
+    return LocalPlayer.Backpack:FindFirstChild(name) or LocalPlayer.Character:FindFirstChild(name)
+end
+
+local function EquipItem(name)
+    if LocalPlayer.Backpack:FindFirstChild(name) then LocalPlayer.Backpack[name].Parent = LocalPlayer.Character end
+end
+
+local function FlyTo(targetCFrame)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    local Root = LocalPlayer.Character.HumanoidRootPart
+    local Dist = (Root.Position - targetCFrame.Position).Magnitude
+    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / SETTINGS.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+    local BV = Instance.new("BodyVelocity", Root)
+    BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    Tween:Play(); Tween.Completed:Wait(); BV:Destroy()
+end
+
+local function GetMobCount(mobName)
+    local count = 0
+    for _, v in pairs(Workspace.Enemies:GetChildren()) do
+        if v.Name == mobName and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- [6] MANAGER SYSTEMS
+
+-- 6.1 SMART CODE MANAGER (QUẢN LÝ CODE THÔNG MINH)
+local ExpCodeIndex = 1
+local LastExpCodeTime = 0
+
+local function ManageCodes()
+    if not SETTINGS.AutoInputCode then return end
+    
+    -- 1. Nhập Misc Codes (Chạy 1 lần duy nhất lúc đầu)
+    if not _G.MiscCodesRedeemed then
+        print(">> Auto Code: Nhập mã Reset/Tiền...")
+        for _, code in ipairs(MISC_CODES) do
+            CommF("RedeemCode", code)
+            task.wait(0.2)
+        end
+        _G.MiscCodesRedeemed = true
+    end
+
+    -- 2. Nhập EXP Codes (Chờ hết hiệu lực mới nhập tiếp)
+    -- Logic: Kiểm tra thời gian hiện tại so với lần nhập cuối
+    if os.time() - LastExpCodeTime >= SETTINGS.CodeInterval then
+        if ExpCodeIndex <= #EXP_CODES then
+            local code = EXP_CODES[ExpCodeIndex]
+            print(">> Auto Code: Nhập EXP Code mới [" .. code .. "]")
+            CommF("RedeemCode", code)
+            
+            -- Cập nhật thời gian và index
+            LastExpCodeTime = os.time()
+            ExpCodeIndex = ExpCodeIndex + 1
+        else
+            -- Đã hết code trong danh sách
+            -- print(">> Đã dùng hết mã x2 EXP!")
+        end
+    end
+end
+
+-- 6.2 FAST ATTACK
+local function ActivateFastAttack()
+    task.spawn(function()
+        while task.wait() do
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
+                VirtualUser:CaptureController()
+                VirtualUser:Button1Down(Vector2.new(1280, 672))
+            end
+        end
+    end)
+end
+ActivateFastAttack()
+
+-- 6.3 BRING MOB (AGGRESSIVE)
+local function BringMobs(Target)
+    if not Target then return end
+    local CenterCF = Target.HumanoidRootPart.CFrame
+    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+        if enemy.Name == Target.Name and enemy ~= Target then
+            if enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                local Dist = (enemy.HumanoidRootPart.Position - CenterCF.Position).Magnitude
+                if Dist <= SETTINGS.BringMobRadius then
+                    enemy.HumanoidRootPart.CFrame = CenterCF
+                    enemy.HumanoidRootPart.CanCollide = false
+                    enemy.Humanoid.WalkSpeed = 0
+                end
+            end
+        end
+    end
+end
+
+local function ProcessStats()
+    if not SETTINGS.AutoStats then return end
+    local Points = LocalPlayer.Data.Points.Value
+    if Points > 0 then
+        local Melee = math.floor(Points * 0.6)
+        CommF("AddPoint", "Melee", Melee)
+        CommF("AddPoint", "Defense", Points - Melee)
+    end
+end
+
+local function AutoBuyFruit()
+    if not SETTINGS.AutoRandomFruit or LocalPlayer.Data.Level.Value < 50 then return end
+    CommF("Cousin", "Buy")
+    for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+        if item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
+    end
+    for _, item in pairs(LocalPlayer.Character:GetChildren()) do
+        if item:IsA("Tool") and item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
+    end
+end
+
+-- [7] FARMING LOGIC
+local function GetBestMelee()
+    local Money = LocalPlayer.Data.Beli.Value
+    for i, melee in ipairs(MELEE_LIST) do
+        local Mastery = 0
+        local skill = LocalPlayer.Data.Skills:FindFirstChild(melee.Name)
+        if skill then Mastery = skill.Level.Value end
+        if Mastery < SETTINGS.MasteryTarget then
+            if HasItem(melee.Name) then return melee.Name, "EQUIP"
+            else
+                if Money >= melee.Price then
+                    if melee.Remote then CommF(melee.Remote); task.wait(1) end
+                    return melee.Name, "BUYING"
+                else
+                    if i > 1 then return MELEE_LIST[i-1].Name, "FARM_MONEY" end
+                    return "Combat", "FARM_MONEY"
+                end
+            end
+        end
+    end
+    return MELEE_LIST[#MELEE_LIST].Name, "MAXED"
+end
+
+local function DoSaberQuest()
+    if not HasItem("Torch") and not HasItem("Relic") then
+        for _, btn in ipairs(SABER.Buttons) do FlyTo(btn); task.wait(0.5) end
+        FlyTo(SABER.Torch); task.wait(1)
+    end
+    if HasItem("Torch") and not HasItem("Cup") then
+        FlyTo(SABER.DesertHouse); EquipItem("Torch"); task.wait(4)
+        FlyTo(SABER.Cup); task.wait(1)
+    end
+    if HasItem("Cup") then
+        FlyTo(SABER.CaveLeak); EquipItem("Cup"); task.wait(4)
+        FlyTo(SABER.SickMan); EquipItem("Cup"); CommF("SickMan"); task.wait(1)
+    end
+    if not HasItem("Relic") then
+        FlyTo(SABER.RichMan); CommF("RichMan")
+        local Mob = Workspace.Enemies:FindFirstChild("Mob Leader")
+        if Mob then
+            repeat
+                if not Mob or Mob.Humanoid.Health <= 0 then break end
+                FlyTo(Mob.HumanoidRootPart.CFrame * CFrame.new(0,5,0))
+                task.wait() 
+            until Mob.Humanoid.Health <= 0
+        end
+        FlyTo(SABER.RichMan); CommF("RichMan")
+    end
+    if HasItem("Relic") then
+        FlyTo(SABER.ShanksDoor); EquipItem("Relic"); task.wait(2)
+        local Shanks = Workspace.Enemies:FindFirstChild("Saber Expert")
+        if Shanks then
+            repeat
+                if not Shanks or Shanks.Humanoid.Health <= 0 then break end
+                FlyTo(Shanks.HumanoidRootPart.CFrame * CFrame.new(0,5,0))
+                task.wait()
+            until Shanks.Humanoid.Health <= 0
+        end
+    end
+end
+
+local function FarmLevel(TargetMeleeName)
+    local Level = LocalPlayer.Data.Level.Value
+    
+    if SETTINGS.FastFarmSky_Lv1_100 and Level < 100 then
+        EquipItem(TargetMeleeName)
+        local Target = nil
+        for _, v in ipairs(Workspace.Enemies:GetChildren()) do
+            if v.Name == "Sky Bandit" and v.Humanoid.Health > 0 then Target = v; break end
+        end
+        if Target then
+            FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
+            BringMobs(Target)
+        else
+            FlyTo(CFrame.new(-4840, 717, -2620))
+        end
+        return
+    end
+
+    local IdealQuest = nil
+    for _, d in ipairs(QUEST_DATA) do
+        if Level >= d.Min and Level < d.Max then IdealQuest = d; break end
+    end
+    if not IdealQuest then return end
+
+    local FallbackQuest = nil
+    for i, d in ipairs(QUEST_DATA) do
+        if d == IdealQuest and i > 1 then FallbackQuest = QUEST_DATA[i-1]; break end
+    end
+
+    local PlayerGui = LocalPlayer.PlayerGui.Main
+    local CurrentQuestTitle = nil
+    if PlayerGui:FindFirstChild("Quest") and PlayerGui.Quest.Visible then
+        local QuestText = PlayerGui.Quest.Container.QuestTitle.Title.Text
+        CurrentQuestTitle = QuestText
+    end
+
+    if CurrentQuestTitle then
+        EquipItem(TargetMeleeName)
+        local TargetMobName = IdealQuest.Mob
+        if FallbackQuest and string.find(CurrentQuestTitle, FallbackQuest.Mob) then
+            TargetMobName = FallbackQuest.Mob
+        end
+        
+        local Target = nil
+        for _, v in ipairs(Workspace.Enemies:GetChildren()) do
+            if v.Name == TargetMobName and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                Target = v; break
+            end
+        end
+        
+        if Target then
+            FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
+            BringMobs(Target)
+        else
+            for _, sp in ipairs(Workspace._WorldOrigin.EnemySpawns:GetChildren()) do
+                if sp.Name == TargetMobName then
+                    FlyTo(sp.CFrame * CFrame.new(0, 20, 0)); break
+                end
+            end
+        end
+    else
+        local SelectedQuest = IdealQuest
+        if SETTINGS.SmartQuestSwitch then
+            local MainCount = GetMobCount(IdealQuest.Mob)
+            if MainCount == 0 and FallbackQuest and GetMobCount(FallbackQuest.Mob) > 0 then
+                print(">> Switch Quest: " .. FallbackQuest.Mob)
+                SelectedQuest = FallbackQuest
+            end
+        end
+        CommF("StartQuest", SelectedQuest.Quest, SelectedQuest.Idx)
+        task.wait(0.5)
+    end
+end
+
+local function CheckPoleV1()
+    if HasItem("Pole (1st Form)") then return false end
+    local Boss = Workspace.Enemies:FindFirstChild("Thunder God")
+    if Boss and Boss:FindFirstChild("Humanoid") and Boss.Humanoid.Health > 0 then
+        if LocalPlayer.Data.Level.Value > 500 then
+            FlyTo(Boss.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
+            return true
+        end
+    end
+    return false
+end
+
+-- [8] EXECUTION LOOP
+RunService.Stepped:Connect(function()
+    if LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+        if LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState(11)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait() do
+        ManageCodes() -- Kiểm tra và nhập code mỗi vòng lặp (nhưng có logic chờ 20p)
+        AutoBuyFruit()
+        
+        local IsBusyBoss = CheckPoleV1()
+        if not IsBusyBoss then
+            local Level = LocalPlayer.Data.Level.Value
+            if Level >= 200 and not HasItem("Saber") then DoSaberQuest()
+            elseif Level >= 700 then
+                FlyTo(CFrame.new(4849, 5, 718)); CommF("TravelDressrosa")
+                task.wait(5); TeleportService:Teleport(4442272183, LocalPlayer)
+            else
+                local MeleeName, Action = GetBestMelee()
+                if Action ~= "BUYING" then
+                    FarmLevel(MeleeName)
+                    ProcessStats()
+                end
+            end
+        end
+    end
+end)
