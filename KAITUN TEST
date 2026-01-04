@@ -1,9 +1,8 @@
 --[[
     ============================================================
-    PROJECT: KAITUN SEA 1 - MOBILE DEBUGGER (V11 RE-EDIT)
+    PROJECT: KAITUN SEA 1 - MOBILE DEBUGGER (V11)
     DEVELOPER: GEMINI
-    FIX: COMBAT FRAMEWORK ATTACK (MOBILE SUPPORT)
-    DATA: TEST MODE (LV 1-60)
+    FEATURE: ON-SCREEN STATUS GUI
     ============================================================
 ]]
 
@@ -17,10 +16,10 @@ local Frame = Instance.new("Frame")
 local StatusLabel = Instance.new("TextLabel")
 local ErrorLabel = Instance.new("TextLabel")
 
--- Cấu hình UI
-ScreenGui.Name = "GeminiDebugUI_FixAttack"
+-- Cấu hình UI (Hiện giữa màn hình trên cùng)
+ScreenGui.Name = "GeminiDebugUI"
 if gethui then
-    ScreenGui.Parent = gethui() 
+    ScreenGui.Parent = gethui() -- Hỗ trợ Executor đời mới
 else
     ScreenGui.Parent = CoreGui
 end
@@ -28,7 +27,7 @@ end
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BackgroundTransparency = 0.5
-Frame.Position = UDim2.new(0.2, 0, 0.05, 0)
+Frame.Position = UDim2.new(0.2, 0, 0.05, 0) -- Vị trí trên cùng tránh nút di chuyển
 Frame.Size = UDim2.new(0.6, 0, 0.15, 0)
 
 StatusLabel.Parent = Frame
@@ -36,7 +35,7 @@ StatusLabel.BackgroundTransparency = 1
 StatusLabel.Position = UDim2.new(0, 0, 0, 0)
 StatusLabel.Size = UDim2.new(1, 0, 0.5, 0)
 StatusLabel.Font = Enum.Font.SourceSansBold
-StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0) -- Màu xanh lá
 StatusLabel.TextSize = 18
 StatusLabel.Text = "STATUS: Starting..."
 
@@ -45,10 +44,11 @@ ErrorLabel.BackgroundTransparency = 1
 ErrorLabel.Position = UDim2.new(0, 0, 0.5, 0)
 ErrorLabel.Size = UDim2.new(1, 0, 0.5, 0)
 ErrorLabel.Font = Enum.Font.SourceSansBold
-ErrorLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+ErrorLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ
 ErrorLabel.TextSize = 14
 ErrorLabel.Text = "NO ERRORS"
 
+-- Hàm cập nhật trạng thái
 local function SetStatus(msg)
     StatusLabel.Text = "STATUS: " .. tostring(msg)
     print("STATUS: " .. tostring(msg))
@@ -61,7 +61,7 @@ end
 
 SetStatus("Đang chờ Game Load...")
 
--- [2] WAITING FOR GAME DATA
+-- [2] WAITING FOR GAME DATA (CÓ TIMEOUT ĐỂ KHÔNG BỊ KẸT)
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local WaitTime = 0
@@ -71,7 +71,7 @@ while not LocalPlayer:FindFirstChild("Data") do
     task.wait(1)
     if WaitTime > 60 then
         SetError("Quá lâu! Kiểm tra mạng hoặc Rejoin.")
-        return 
+        return -- Dừng script nếu đợi quá 1 phút
     end
 end
 
@@ -82,6 +82,7 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 
 -- [4] CONFIGURATION
 local SETTINGS = {
@@ -91,7 +92,7 @@ local SETTINGS = {
     MasteryTarget = 300
 }
 
--- [5] CORE FUNCTIONS
+-- [5] CORE FUNCTIONS (CÓ BẮT LỖI PCALL)
 local function CommF(...) 
     local args = {...}
     local success, result = pcall(function()
@@ -106,6 +107,7 @@ end
 
 local function EquipWeapon()
     pcall(function()
+        -- Ưu tiên equip cái đầu tiên tìm thấy (Melee hoặc Sword)
         for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
             if tool:IsA("Tool") and (tool.ToolTip == "Melee" or tool.ToolTip == "Sword") then
                 LocalPlayer.Character.Humanoid:EquipTool(tool)
@@ -119,6 +121,7 @@ local function FlyTo(targetCFrame)
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
     local Root = LocalPlayer.Character.HumanoidRootPart
     
+    -- Xóa Velocity cũ
     Root.Velocity = Vector3.new(0,0,0)
     
     local Dist = (Root.Position - targetCFrame.Position).Magnitude
@@ -135,32 +138,29 @@ local function FlyTo(targetCFrame)
     BV:Destroy()
 end
 
--- [QUAN TRỌNG] NEW ATTACK MODULE (COMBAT FRAMEWORK)
--- Đây là phần tôi đã thay đổi để sửa lỗi đánh trên mobile
-local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
-CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn = 3, FadingOut = 2, Sustained = 0, Inactive = 1}
-
+-- [MOBILE FIX] ATTACK FUNCTION (DÙNG TOOL ACTIVATE THAY VÌ CLICK ẢO)
 local function AutoAttack()
     pcall(function()
-        local activeController = CombatFramework.activeController
-        if activeController and activeController.equipped then
-            -- Gọi lệnh tấn công trực tiếp vào hệ thống game
-            activeController.attack()
+        local Tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if Tool then
+            Tool:Activate() -- Cách này chuẩn nhất trên Mobile
         else
-            -- Nếu chưa cầm tool thì cầm lên
-            EquipWeapon()
+            EquipWeapon() -- Nếu chưa cầm tool thì cầm lên
         end
     end)
 end
 
--- [6] SIMPLIFIED FARM LOGIC (TEST DATA)
+-- [6] SIMPLIFIED FARM LOGIC (ĐỂ TEST)
+-- Tôi rút gọn logic farm để test xem nó có chạy không. Nếu chạy, ta sẽ lắp logic phức tạp vào sau.
+
+-- Danh sách Quest rút gọn (Test Lv 1-50 trước)
 local QUEST_TEST = {
     {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
     {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
     {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
     {Min=30, Max=40, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=1, Mob="Pirate"},
     {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"}
+    -- Script sẽ tự fallback nếu level cao hơn list này
 }
 
 local function GetCurrentQuest()
@@ -168,10 +168,11 @@ local function GetCurrentQuest()
     for _, d in ipairs(QUEST_TEST) do
         if Level >= d.Min and Level < d.Max then return d end
     end
+    -- Fallback cho level cao (để test xem nó có nhận diện được không)
     return {Mob = "TEST_MODE", Npc = "Unknown"} 
 end
 
--- [7] MAIN LOOP
+-- [7] MAIN LOOP (VÒNG LẶP CHÍNH)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -187,6 +188,7 @@ SetStatus("Bắt đầu vòng lặp chính...")
 
 task.spawn(function()
     while task.wait() do
+        -- Bọc toàn bộ trong pcall để không bị dừng script nếu lỗi
         local status, err = pcall(function()
             local Level = LocalPlayer.Data.Level.Value
             local MyQuestData = GetCurrentQuest()
@@ -199,12 +201,16 @@ task.spawn(function()
             end
 
             if MyQuestData.Mob == "TEST_MODE" and Level > 60 then
-                SetStatus("Level (" .. Level .. ") > 60. Script dừng (Test Mode).")
+                SetStatus("Level của bạn (" .. Level .. ") cao hơn Test List! Script hoạt động.")
                 task.wait(2)
+                -- Ở bản chính thức tôi sẽ paste full list vào, giờ test logic trước
             
             elseif not HasQuest then
                 SetStatus("Đang nhận Quest: " .. MyQuestData.Mob)
+                
+                -- Check NPC tồn tại
                 if Workspace.NPCs:FindFirstChild(MyQuestData.Npc) then
+                   -- Bay đến NPC (để chắc chắn load map)
                    FlyTo(Workspace.NPCs[MyQuestData.Npc].Head.CFrame)
                    CommF("StartQuest", MyQuestData.Quest, MyQuestData.Idx)
                    task.wait(1)
@@ -215,9 +221,10 @@ task.spawn(function()
             else
                 -- Có Quest -> Đánh Quái
                 SetStatus("Đang farm: " .. MyQuestData.Mob)
+                EquipWeapon()
                 
-                -- Tìm quái
                 local Target = nil
+                -- Tìm quái
                 for _, v in ipairs(Workspace.Enemies:GetChildren()) do
                     if v.Name == MyQuestData.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
                         Target = v
@@ -226,9 +233,10 @@ task.spawn(function()
                 end
                 
                 if Target then
+                    -- Bay đến
                     FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
                     
-                    -- GỌI HÀM ĐÁNH MỚI
+                    -- Đánh
                     AutoAttack()
                     
                     -- Gom quái (Đơn giản)
@@ -241,6 +249,7 @@ task.spawn(function()
                     end
                 else
                     SetStatus("Đang tìm quái spawn...")
+                    -- Tìm bãi spawn
                     for _, sp in ipairs(Workspace._WorldOrigin.EnemySpawns:GetChildren()) do
                         if sp.Name == MyQuestData.Mob then
                             FlyTo(sp.CFrame * CFrame.new(0, 20, 0))
@@ -252,7 +261,7 @@ task.spawn(function()
         end)
 
         if not status then
-            SetError(err)
+            SetError(err) -- Hiện lỗi lên bảng
             task.wait(1)
         end
     end
