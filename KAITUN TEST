@@ -1,52 +1,52 @@
 --[[
     ============================================================
-    PROJECT: KAITUN SEA 1 - GOD TIER
-    DEVELOPER: GEMINI (SENIOR IT EXPERT)
-    VERSION: 9.0 (SMART EXP CODES + DUAL FARM + NO DELAY)
+    PROJECT: KAITUN SEA 1 - STABLE VERSION (V10)
+    DEVELOPER: GEMINI
+    FIXES: Data Loading, Thread Blocking, Mobile Support
     ============================================================
 ]]
 
--- [1] SERVICES
+-- [1] WAIT FOR GAME LOAD (QUAN TRỌNG: CHỜ GAME TẢI XONG)
+repeat task.wait() until game:IsLoaded()
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+repeat task.wait() until LocalPlayer.Character
+repeat task.wait() until LocalPlayer:FindFirstChild("Data")
+repeat task.wait() until LocalPlayer.Data:FindFirstChild("Level")
+
+print(">> GAME LOADED! STARTING SCRIPT...")
+
+-- [2] SERVICES
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager") -- Dùng cái này thay VirtualUser cho ổn định
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
-local LocalPlayer = Players.LocalPlayer
 
--- [2] CONFIGURATION
+-- [3] CONFIGURATION
 local SETTINGS = {
-    FlySpeed = 330,             
-    FarmDistance = 25,          
-    BringMobRadius = 350,       
+    FlySpeed = 300,             -- Giảm nhẹ xuống 300 để ổn định hơn
+    FarmDistance = 25,
+    BringMobRadius = 350,
     AutoStats = true,
     Sea2Level = 700,
     MasteryTarget = 300,
-    FastFarmSky_Lv1_100 = true, 
+    FastFarmSky_Lv1_100 = true,
     AutoRandomFruit = true,
     SmartQuestSwitch = true,
-    AutoInputCode = true,       -- Bật nhập code
-    CodeInterval = 1200         -- Thời gian chờ giữa các code EXP (1200s = 20 phút)
+    AutoInputCode = true,
+    CodeInterval = 1200
 }
 
--- [3] DATA: CODES LIST (ĐÃ CẬP NHẬT MỚI NHẤT)
-
--- Loại 1: Code dùng 1 lần (Reset Stats, Money, Title) - Chạy ngay khi vào game
-local MISC_CODES = {
-    "KITT_RESET", "Sub2GamerRobot_RESET1", "Sub2UncleKizaru", "Fudd10", "Bignews", "Fudd10_v2"
-}
-
--- Loại 2: Code x2 EXP - Dùng lần lượt từng cái mỗi 20 phút
+-- [4] DATA LISTS
+local MISC_CODES = {"KITT_RESET", "Sub2GamerRobot_RESET1", "Sub2UncleKizaru", "Fudd10", "Bignews", "Fudd10_v2"}
 local EXP_CODES = {
-    "Sub2CaptainMaui", "DEVSCOOKING", "JCWK", "Starcodeheo", "Bluxxy", 
-    "Sub2Fer999", "Enyu_is_Pro", "Magicbus", "Sub2GamerRobot_EXP1", 
-    "THEGREATACE", "StrawHatMaine", "Sub2OfficialNoobie", "TantaiGaming", 
-    "Axiore", "KittGaming"
+    "Sub2CaptainMaui", "DEVSCOOKING", "JCWK", "Starcodeheo", "Bluxxy", "Sub2Fer999", 
+    "Enyu_is_Pro", "Magicbus", "Sub2GamerRobot_EXP1", "THEGREATACE", "StrawHatMaine", 
+    "Sub2OfficialNoobie", "TantaiGaming", "Axiore", "KittGaming"
 }
 
--- [4] DATA: LISTS
 local MELEE_LIST = {
     {Name = "Combat", Price = 0, Remote = nil},
     {Name = "Dark Step", Price = 150000, Remote = "BuyBlackLeg"},
@@ -91,25 +91,45 @@ local SABER = {
     MobLeader = CFrame.new(-920, 15, 5452), ShanksDoor = CFrame.new(4877, 6, 720)
 }
 
--- [5] CORE FUNCTIONS
-local function CommF(...) return ReplicatedStorage.Remotes.CommF_:InvokeServer(...) end
+-- [5] CORE HELPER FUNCTIONS
+local function CommF(...) 
+    local args = {...}
+    local success, result = pcall(function()
+        return ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args))
+    end)
+    if not success then warn("Remote Fail: ", args[1]) end
+    return result
+end
 
 local function HasItem(name)
     return LocalPlayer.Backpack:FindFirstChild(name) or LocalPlayer.Character:FindFirstChild(name)
 end
 
 local function EquipItem(name)
-    if LocalPlayer.Backpack:FindFirstChild(name) then LocalPlayer.Backpack[name].Parent = LocalPlayer.Character end
+    if LocalPlayer.Backpack:FindFirstChild(name) then 
+        LocalPlayer.Backpack[name].Parent = LocalPlayer.Character 
+    end
 end
 
 local function FlyTo(targetCFrame)
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
     local Root = LocalPlayer.Character.HumanoidRootPart
+    
+    -- Reset Velocity để tránh bị giật lại
+    Root.Velocity = Vector3.new(0,0,0)
+    
     local Dist = (Root.Position - targetCFrame.Position).Magnitude
-    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / SETTINGS.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+    local Time = Dist / SETTINGS.FlySpeed
+    
+    local Tween = TweenService:Create(Root, TweenInfo.new(Time, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+    
     local BV = Instance.new("BodyVelocity", Root)
-    BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-    Tween:Play(); Tween.Completed:Wait(); BV:Destroy()
+    BV.Velocity = Vector3.new(0,0,0)
+    BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    
+    Tween:Play()
+    Tween.Completed:Wait()
+    BV:Destroy()
 end
 
 local function GetMobCount(mobName)
@@ -122,57 +142,73 @@ local function GetMobCount(mobName)
     return count
 end
 
--- [6] MANAGER SYSTEMS
+-- [6] INDEPENDENT THREADS (CÁC LUỒNG CHẠY RIÊNG)
 
--- 6.1 SMART CODE MANAGER (QUẢN LÝ CODE THÔNG MINH)
-local ExpCodeIndex = 1
-local LastExpCodeTime = 0
-
-local function ManageCodes()
-    if not SETTINGS.AutoInputCode then return end
-    
-    -- 1. Nhập Misc Codes (Chạy 1 lần duy nhất lúc đầu)
-    if not _G.MiscCodesRedeemed then
-        print(">> Auto Code: Nhập mã Reset/Tiền...")
-        for _, code in ipairs(MISC_CODES) do
-            CommF("RedeemCode", code)
-            task.wait(0.2)
-        end
-        _G.MiscCodesRedeemed = true
-    end
-
-    -- 2. Nhập EXP Codes (Chờ hết hiệu lực mới nhập tiếp)
-    -- Logic: Kiểm tra thời gian hiện tại so với lần nhập cuối
-    if os.time() - LastExpCodeTime >= SETTINGS.CodeInterval then
-        if ExpCodeIndex <= #EXP_CODES then
-            local code = EXP_CODES[ExpCodeIndex]
-            print(">> Auto Code: Nhập EXP Code mới [" .. code .. "]")
-            CommF("RedeemCode", code)
-            
-            -- Cập nhật thời gian và index
-            LastExpCodeTime = os.time()
-            ExpCodeIndex = ExpCodeIndex + 1
-        else
-            -- Đã hết code trong danh sách
-            -- print(">> Đã dùng hết mã x2 EXP!")
-        end
-    end
-end
-
--- 6.2 FAST ATTACK
-local function ActivateFastAttack()
-    task.spawn(function()
-        while task.wait() do
+-- 6.1 Fast Attack (Dùng VirtualInputManager)
+task.spawn(function()
+    while task.wait() do -- 0 delay
+        pcall(function()
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
-                VirtualUser:CaptureController()
-                VirtualUser:Button1Down(Vector2.new(1280, 672))
+                -- Click chuột
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end
+        end)
+    end
+end)
+
+-- 6.2 Auto Code Manager (Chạy riêng không làm lag Farm)
+task.spawn(function()
+    if not SETTINGS.AutoInputCode then return end
+    task.wait(5) -- Đợi 5s cho game ổn định
+    
+    -- Misc Codes
+    for _, code in ipairs(MISC_CODES) do
+        CommF("RedeemCode", code)
+        task.wait(0.1)
+    end
+    
+    -- EXP Codes Loop
+    local ExpIndex = 1
+    while task.wait(1) do
+        if ExpIndex <= #EXP_CODES then
+            print(">> [Code System] Redeeming: " .. EXP_CODES[ExpIndex])
+            CommF("RedeemCode", EXP_CODES[ExpIndex])
+            ExpIndex = ExpIndex + 1
+            task.wait(SETTINGS.CodeInterval) -- Chờ 20 phút
+        end
+    end
+end)
+
+-- 6.3 Auto Fruit & Stats
+task.spawn(function()
+    while task.wait(2) do
+        -- Auto Fruit
+        if SETTINGS.AutoRandomFruit and LocalPlayer.Data.Level.Value >= 50 then
+            CommF("Cousin", "Buy")
+            for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
+            end
+            for _, item in pairs(LocalPlayer.Character:GetChildren()) do
+                if item:IsA("Tool") and item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
             end
         end
-    end)
-end
-ActivateFastAttack()
+        
+        -- Auto Stats
+        if SETTINGS.AutoStats then
+            local Points = LocalPlayer.Data.Points.Value
+            if Points > 0 then
+                local Melee = math.floor(Points * 0.6)
+                CommF("AddPoint", "Melee", Melee)
+                CommF("AddPoint", "Defense", Points - Melee)
+            end
+        end
+    end
+end)
 
--- 6.3 BRING MOB (AGGRESSIVE)
+-- [7] MAIN FARM LOGIC
+
+-- Bring Mob
 local function BringMobs(Target)
     if not Target then return end
     local CenterCF = Target.HumanoidRootPart.CFrame
@@ -184,34 +220,14 @@ local function BringMobs(Target)
                     enemy.HumanoidRootPart.CFrame = CenterCF
                     enemy.HumanoidRootPart.CanCollide = false
                     enemy.Humanoid.WalkSpeed = 0
+                    if enemy:FindFirstChild("Head") then enemy.Head.CanCollide = false end
                 end
             end
         end
     end
 end
 
-local function ProcessStats()
-    if not SETTINGS.AutoStats then return end
-    local Points = LocalPlayer.Data.Points.Value
-    if Points > 0 then
-        local Melee = math.floor(Points * 0.6)
-        CommF("AddPoint", "Melee", Melee)
-        CommF("AddPoint", "Defense", Points - Melee)
-    end
-end
-
-local function AutoBuyFruit()
-    if not SETTINGS.AutoRandomFruit or LocalPlayer.Data.Level.Value < 50 then return end
-    CommF("Cousin", "Buy")
-    for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
-        if item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
-    end
-    for _, item in pairs(LocalPlayer.Character:GetChildren()) do
-        if item:IsA("Tool") and item.ToolTip == "Blox Fruit" then CommF("StoreFruit", item.Name, item) end
-    end
-end
-
--- [7] FARMING LOGIC
+-- Melee Manager
 local function GetBestMelee()
     local Money = LocalPlayer.Data.Beli.Value
     for i, melee in ipairs(MELEE_LIST) do
@@ -234,7 +250,9 @@ local function GetBestMelee()
     return MELEE_LIST[#MELEE_LIST].Name, "MAXED"
 end
 
+-- Saber Quest
 local function DoSaberQuest()
+    print(">> Đang làm Saber Quest...")
     if not HasItem("Torch") and not HasItem("Relic") then
         for _, btn in ipairs(SABER.Buttons) do FlyTo(btn); task.wait(0.5) end
         FlyTo(SABER.Torch); task.wait(1)
@@ -272,9 +290,11 @@ local function DoSaberQuest()
     end
 end
 
+-- MAIN FARM FUNCTION
 local function FarmLevel(TargetMeleeName)
     local Level = LocalPlayer.Data.Level.Value
     
+    -- Sky Farm (1-100)
     if SETTINGS.FastFarmSky_Lv1_100 and Level < 100 then
         EquipItem(TargetMeleeName)
         local Target = nil
@@ -290,6 +310,7 @@ local function FarmLevel(TargetMeleeName)
         return
     end
 
+    -- Identify Quest
     local IdealQuest = nil
     for _, d in ipairs(QUEST_DATA) do
         if Level >= d.Min and Level < d.Max then IdealQuest = d; break end
@@ -301,14 +322,15 @@ local function FarmLevel(TargetMeleeName)
         if d == IdealQuest and i > 1 then FallbackQuest = QUEST_DATA[i-1]; break end
     end
 
+    -- Check Current Quest
     local PlayerGui = LocalPlayer.PlayerGui.Main
     local CurrentQuestTitle = nil
     if PlayerGui:FindFirstChild("Quest") and PlayerGui.Quest.Visible then
-        local QuestText = PlayerGui.Quest.Container.QuestTitle.Title.Text
-        CurrentQuestTitle = QuestText
+        CurrentQuestTitle = PlayerGui.Quest.Container.QuestTitle.Title.Text
     end
 
     if CurrentQuestTitle then
+        -- Has Quest -> Kill Mob
         EquipItem(TargetMeleeName)
         local TargetMobName = IdealQuest.Mob
         if FallbackQuest and string.find(CurrentQuestTitle, FallbackQuest.Mob) then
@@ -333,6 +355,7 @@ local function FarmLevel(TargetMeleeName)
             end
         end
     else
+        -- No Quest -> Get Quest
         local SelectedQuest = IdealQuest
         if SETTINGS.SmartQuestSwitch then
             local MainCount = GetMobCount(IdealQuest.Mob)
@@ -358,7 +381,7 @@ local function CheckPoleV1()
     return false
 end
 
--- [8] EXECUTION LOOP
+-- [8] LOOP CHÍNH (MAIN LOOP)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -370,25 +393,32 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+print(">> SCRIPT STARTED SUCCESSFULLY!")
+
 task.spawn(function()
     while task.wait() do
-        ManageCodes() -- Kiểm tra và nhập code mỗi vòng lặp (nhưng có logic chờ 20p)
-        AutoBuyFruit()
-        
-        local IsBusyBoss = CheckPoleV1()
-        if not IsBusyBoss then
-            local Level = LocalPlayer.Data.Level.Value
-            if Level >= 200 and not HasItem("Saber") then DoSaberQuest()
-            elseif Level >= 700 then
-                FlyTo(CFrame.new(4849, 5, 718)); CommF("TravelDressrosa")
-                task.wait(5); TeleportService:Teleport(4442272183, LocalPlayer)
-            else
-                local MeleeName, Action = GetBestMelee()
-                if Action ~= "BUYING" then
-                    FarmLevel(MeleeName)
-                    ProcessStats()
+        -- Error handling để vòng lặp không bị crash
+        pcall(function()
+            local IsBusyBoss = CheckPoleV1()
+            
+            if not IsBusyBoss then
+                local Level = LocalPlayer.Data.Level.Value
+                
+                if Level >= 200 and not HasItem("Saber") then 
+                    DoSaberQuest()
+                elseif Level >= 700 then
+                    print(">> Going to Sea 2...")
+                    FlyTo(CFrame.new(4849, 5, 718))
+                    CommF("TravelDressrosa")
+                    task.wait(5)
+                    TeleportService:Teleport(4442272183, LocalPlayer)
+                else
+                    local MeleeName, Action = GetBestMelee()
+                    if Action ~= "BUYING" then
+                        FarmLevel(MeleeName)
+                    end
                 end
             end
-        end
+        end)
     end
 end)
