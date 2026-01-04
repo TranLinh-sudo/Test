@@ -1,12 +1,13 @@
 --[[
     ============================================================
-    PROJECT: KAITUN SEA 1 - V11 MODIFIED
+    PROJECT: KAITUN SEA 1 - MOBILE DEBUGGER (V11 RE-EDIT)
     DEVELOPER: GEMINI
-    FIX: COMBAT FRAMEWORK (MOBILE ATTACK)
+    FIX: COMBAT FRAMEWORK ATTACK (MOBILE SUPPORT)
+    DATA: TEST MODE (LV 1-60)
     ============================================================
 ]]
 
--- [1] GUI DEBUGGER (GIỮ NGUYÊN)
+-- [1] TẠO BẢNG HIỆN LỖI (GUI)
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
@@ -16,8 +17,13 @@ local Frame = Instance.new("Frame")
 local StatusLabel = Instance.new("TextLabel")
 local ErrorLabel = Instance.new("TextLabel")
 
-ScreenGui.Name = "GeminiV11Mod"
-if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = CoreGui end
+-- Cấu hình UI
+ScreenGui.Name = "GeminiDebugUI_FixAttack"
+if gethui then
+    ScreenGui.Parent = gethui() 
+else
+    ScreenGui.Parent = CoreGui
+end
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -55,36 +61,49 @@ end
 
 SetStatus("Đang chờ Game Load...")
 
--- [2] WAIT FOR DATA
+-- [2] WAITING FOR GAME DATA
 if not game:IsLoaded() then game.Loaded:Wait() end
+
 local WaitTime = 0
 while not LocalPlayer:FindFirstChild("Data") do
     WaitTime = WaitTime + 1
     SetStatus("Đang tải Data... " .. WaitTime .. "s")
     task.wait(1)
-    if WaitTime > 60 then SetError("Mạng yếu! Rejoin đi."); return end
+    if WaitTime > 60 then
+        SetError("Quá lâu! Kiểm tra mạng hoặc Rejoin.")
+        return 
+    end
 end
-repeat task.wait() until LocalPlayer.Data:FindFirstChild("Level")
+
 SetStatus("Data Loaded! Chuẩn bị Services...")
 
--- [3] SERVICES & CONFIG
+-- [3] SERVICES
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
+-- [4] CONFIGURATION
 local SETTINGS = {
     FlySpeed = 300,
     FarmDistance = 25,
-    FastAttackDelay = 0.15 -- Tốc độ đánh
+    BringMobRadius = 300,
+    MasteryTarget = 300
 }
 
--- [4] *** QUAN TRỌNG: MODULE ATTACK MỚI (FIX CHO V11) ***
-local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
-CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn = 3, FadingOut = 2, Sustained = 0, Inactive = 1}
+-- [5] CORE FUNCTIONS
+local function CommF(...) 
+    local args = {...}
+    local success, result = pcall(function()
+        return ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args))
+    end)
+    if not success then 
+        SetError("Remote Fail: " .. tostring(args[1])) 
+        return nil
+    end
+    return result
+end
 
--- Hàm EquipWeapon (Cầm vũ khí lên trước khi đánh)
 local function EquipWeapon()
     pcall(function()
         for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -96,79 +115,63 @@ local function EquipWeapon()
     end)
 end
 
--- Hàm AutoAttack dùng CombatFramework
+local function FlyTo(targetCFrame)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    local Root = LocalPlayer.Character.HumanoidRootPart
+    
+    Root.Velocity = Vector3.new(0,0,0)
+    
+    local Dist = (Root.Position - targetCFrame.Position).Magnitude
+    local Time = Dist / SETTINGS.FlySpeed
+    
+    local Tween = TweenService:Create(Root, TweenInfo.new(Time, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+    
+    local BV = Instance.new("BodyVelocity", Root)
+    BV.Velocity = Vector3.new(0,0,0)
+    BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    
+    Tween:Play()
+    Tween.Completed:Wait()
+    BV:Destroy()
+end
+
+-- [QUAN TRỌNG] NEW ATTACK MODULE (COMBAT FRAMEWORK)
+-- Đây là phần tôi đã thay đổi để sửa lỗi đánh trên mobile
+local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
+local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
+CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn = 3, FadingOut = 2, Sustained = 0, Inactive = 1}
+
 local function AutoAttack()
     pcall(function()
         local activeController = CombatFramework.activeController
         if activeController and activeController.equipped then
-            activeController.attack() -- Đánh trực tiếp
+            -- Gọi lệnh tấn công trực tiếp vào hệ thống game
+            activeController.attack()
         else
-            EquipWeapon() -- Nếu chưa cầm thì cầm lên
+            -- Nếu chưa cầm tool thì cầm lên
+            EquipWeapon()
         end
     end)
 end
 
--- [5] CORE FUNCTIONS
-local function CommF(...) 
-    local args = {...}
-    local success, result = pcall(function()
-        return ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args))
-    end)
-    if not success then SetError("Remote Fail: " .. tostring(args[1])); return nil end
-    return result
-end
-
-local function FlyTo(targetCFrame)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local Root = LocalPlayer.Character.HumanoidRootPart
-    Root.Velocity = Vector3.new(0,0,0)
-    local Dist = (Root.Position - targetCFrame.Position).Magnitude
-    if Dist < 5 then return end
-    
-    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / SETTINGS.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-    local BV = Instance.new("BodyVelocity", Root)
-    BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-    Tween:Play(); Tween.Completed:Wait(); BV:Destroy()
-end
-
--- [6] FULL QUEST DATA (ĐÃ TRẢ LẠI LIST ĐẦY ĐỦ)
-local QUEST_DATA = {
+-- [6] SIMPLIFIED FARM LOGIC (TEST DATA)
+local QUEST_TEST = {
     {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
     {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
     {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
     {Min=30, Max=40, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=1, Mob="Pirate"},
-    {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"},
-    {Min=60, Max=75, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=1, Mob="Desert Bandit"},
-    {Min=75, Max=90, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=2, Mob="Desert Officer"},
-    {Min=90, Max=105, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=1, Mob="Snow Bandit"},
-    {Min=105, Max=120, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=2, Mob="Snowman"},
-    {Min=120, Max=150, Npc="Marine Quest Giver", Quest="MarineQuest2", Idx=1, Mob="Chief Petty Officer"},
-    {Min=150, Max=175, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=1, Mob="Sky Bandit"},
-    {Min=175, Max=190, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=2, Mob="Dark Master"},
-    {Min=190, Max=210, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=1, Mob="Prisoner"},
-    {Min=210, Max=230, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=2, Mob="Dangerous Prisoner"},
-    {Min=230, Max=250, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=1, Mob="Toga Warrior"},
-    {Min=250, Max=300, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=2, Mob="Gladiator"},
-    {Min=300, Max=330, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=1, Mob="Military Soldier"},
-    {Min=330, Max=375, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=2, Mob="Military Spy"},
-    {Min=375, Max=400, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=1, Mob="Fishman Warrior"},
-    {Min=400, Max=450, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=2, Mob="Fishman Commando"},
-    {Min=450, Max=475, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=1, Mob="God's Guard"},
-    {Min=475, Max=525, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=2, Mob="Shanda"},
-    {Min=525, Max=550, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=1, Mob="Royal Squad"},
-    {Min=550, Max=625, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=2, Mob="Royal Soldier"},
-    {Min=625, Max=650, Npc="Galley Captain", Quest="FountainQuest", Idx=1, Mob="Galley Pirate"},
-    {Min=650, Max=700, Npc="Galley Captain", Quest="FountainQuest", Idx=2, Mob="Galley Captain"},
+    {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"}
 }
 
--- [7] LOOP ATTACK RIÊNG (ĐỂ ĐÁNH LIÊN TỤC)
-task.spawn(function()
-    while task.wait(SETTINGS.FastAttackDelay) do
-        AutoAttack()
+local function GetCurrentQuest()
+    local Level = LocalPlayer.Data.Level.Value
+    for _, d in ipairs(QUEST_TEST) do
+        if Level >= d.Min and Level < d.Max then return d end
     end
-end)
+    return {Mob = "TEST_MODE", Npc = "Unknown"} 
+end
 
--- [8] MAIN LOGIC (GIỮ NGUYÊN CẤU TRÚC V11)
+-- [7] MAIN LOOP
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -180,24 +183,14 @@ RunService.Stepped:Connect(function()
     end
 end)
 
-SetStatus("V11 Fix Sẵn sàng! Bắt đầu...")
+SetStatus("Bắt đầu vòng lặp chính...")
 
 task.spawn(function()
     while task.wait() do
         local status, err = pcall(function()
             local Level = LocalPlayer.Data.Level.Value
+            local MyQuestData = GetCurrentQuest()
             
-            -- Lấy Quest từ Full List
-            local MyQuestData = nil
-            for _, d in ipairs(QUEST_DATA) do
-                if Level >= d.Min and Level < d.Max then MyQuestData = d; break end
-            end
-            
-            if not MyQuestData then 
-                SetStatus("Max Level hoặc Lỗi Data")
-                return 
-            end
-
             -- Check Quest GUI
             local PlayerGui = LocalPlayer.PlayerGui.Main
             local HasQuest = false
@@ -205,24 +198,25 @@ task.spawn(function()
                 HasQuest = true 
             end
 
-            if not HasQuest then
-                SetStatus("Nhận Quest: " .. MyQuestData.Mob)
-                
+            if MyQuestData.Mob == "TEST_MODE" and Level > 60 then
+                SetStatus("Level (" .. Level .. ") > 60. Script dừng (Test Mode).")
+                task.wait(2)
+            
+            elseif not HasQuest then
+                SetStatus("Đang nhận Quest: " .. MyQuestData.Mob)
                 if Workspace.NPCs:FindFirstChild(MyQuestData.Npc) then
                    FlyTo(Workspace.NPCs[MyQuestData.Npc].Head.CFrame)
                    CommF("StartQuest", MyQuestData.Quest, MyQuestData.Idx)
                    task.wait(1)
                 else
-                   -- Logic tìm map (Được tích hợp vào V11 để tránh lỗi đứng im)
-                   SetStatus("Không thấy NPC, tìm bãi quái...")
-                   local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(MyQuestData.Mob)
-                   if Spawns then FlyTo(Spawns.CFrame * CFrame.new(0, 50, 0)) end
+                   SetStatus("Không tìm thấy NPC: " .. MyQuestData.Npc)
                 end
                 
             else
-                -- Có Quest -> Đánh
+                -- Có Quest -> Đánh Quái
                 SetStatus("Đang farm: " .. MyQuestData.Mob)
                 
+                -- Tìm quái
                 local Target = nil
                 for _, v in ipairs(Workspace.Enemies:GetChildren()) do
                     if v.Name == MyQuestData.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
@@ -234,7 +228,10 @@ task.spawn(function()
                 if Target then
                     FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
                     
-                    -- Gom quái V11
+                    -- GỌI HÀM ĐÁNH MỚI
+                    AutoAttack()
+                    
+                    -- Gom quái (Đơn giản)
                     for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
                         if enemy.Name == Target.Name and enemy ~= Target and (enemy.HumanoidRootPart.Position - Target.HumanoidRootPart.Position).Magnitude < 300 then
                             enemy.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame
@@ -257,8 +254,6 @@ task.spawn(function()
         if not status then
             SetError(err)
             task.wait(1)
-        else
-            ErrorLabel.Text = "NO ERRORS"
         end
     end
 end)
