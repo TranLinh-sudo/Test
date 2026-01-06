@@ -1,79 +1,250 @@
 --[[
     ============================================================
-    PROJECT: TEST MODULE - FAST ATTACK & REACH
+    PROJECT: KAITUN SEA 1 - V17 (ADVANCED COMBAT)
     DEVELOPER: GEMINI
-    TARGET: MOBILE & PC
+    METHOD: BLADE HIT INJECTION (KHÔNG CẦN CLICK)
     ============================================================
 ]]
 
+-- [1] GUI DEBUGGER
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- [CẤU HÌNH]
-local SETTINGS = {
-    HitboxSize = 60, -- Khoảng cách đánh (60 là rất xa, xa hơn Phật)
-    AttackSpeed = true -- Bật đánh nhanh
-}
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local StatusLabel = Instance.new("TextLabel")
 
--- GUI THÔNG BÁO
-local StarterGui = game:GetService("StarterGui")
-StarterGui:SetCore("SendNotification", {
-    Title = "GEMINI TEST",
-    Text = "Đã bật Fast Attack & Reach!",
-    Duration = 5
-})
+ScreenGui.Name = "GeminiV17_Combat"
+if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = CoreGui end
 
--- [MODULE 1] FAST ATTACK (COMBAT FRAMEWORK)
-local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.5
+Frame.Position = UDim2.new(0.2, 0, 0.05, 0)
+Frame.Size = UDim2.new(0.6, 0, 0.15, 0)
 
--- Tắt rung màn hình để đỡ chóng mặt
-CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn = 3, FadingOut = 2, Sustained = 0, Inactive = 1}
+StatusLabel.Parent = Frame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Size = UDim2.new(1, 0, 1, 0)
+StatusLabel.Font = Enum.Font.SourceSansBold
+StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Màu Tím (Advanced)
+StatusLabel.TextSize = 18
+StatusLabel.Text = "LOADING ADVANCED COMBAT..."
 
-local function DoAttack()
-    pcall(function()
-        local activeController = CombatFramework.activeController
-        if activeController and activeController.equipped then
-            activeController.attack()
-        end
-    end)
+local function SetStatus(msg)
+    StatusLabel.Text = msg
 end
 
--- [MODULE 2] SUPER REACH (HITBOX EXPANDER)
-local function DoReach()
+-- [2] SERVICES & SETUP
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+-- Đợi load xong
+repeat task.wait() until LocalPlayer.Character
+repeat task.wait() until LocalPlayer:FindFirstChild("Data")
+
+-- [3] CONFIGURATION
+local SETTINGS = {
+    FlySpeed = 300,
+    FarmDistance = 40, -- Tăng khoảng cách farm lên vì ta có Reach
+    AttackRadius = 60  -- Phạm vi gây sát thương (Reach)
+}
+
+-- [4] *** ADVANCED COMBAT MODULE (CỐT LÕI MỚI) ***
+local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
+local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
+local RigController = require(LocalPlayer.PlayerScripts.CombatFramework.RigController)
+
+-- Tắt rung lắc
+CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn=3, FadingOut=2, Sustained=0, Inactive=1}
+
+-- Hàm lấy Cooldown thực tế (để bypass)
+local function GetCurrentBlade()
+    local p1 = CombatFramework.activeController
+    local ret = p1.blades[1]
+    if not ret then return nil end
+    while ret.Parent ~= game.Players.LocalPlayer.Character do 
+        ret = ret.Parent 
+    end
+    return ret
+end
+
+-- HÀM TẤN CÔNG NÂNG CAO (GÂY SÁT THƯƠNG TRỰC TIẾP)
+local function AdvancedAttack()
     pcall(function()
-        local Character = LocalPlayer.Character
-        if Character then
-            -- Tìm vũ khí đang cầm
-            local Tool = Character:FindFirstChildOfClass("Tool")
-            if Tool and Tool:FindFirstChild("Handle") then
-                -- Phóng to Hitbox
-                Tool.Handle.Size = Vector3.new(SETTINGS.HitboxSize, SETTINGS.HitboxSize, SETTINGS.HitboxSize)
-                Tool.Handle.Massless = true -- Làm nhẹ để không bị nặng tay
-                Tool.Handle.CanCollide = false -- Tắt va chạm để không bị kẹt
-                
-                -- Tạo khung đỏ để bạn nhìn thấy phạm vi (Visual)
-                if not Tool.Handle:FindFirstChild("ReachBox") then
-                    local box = Instance.new("SelectionBox")
-                    box.Name = "ReachBox"
-                    box.Adornee = Tool.Handle
-                    box.Parent = Tool.Handle
-                    box.Color3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ
-                    box.Transparency = 0.5
+        local AC = CombatFramework.activeController
+        
+        if AC and AC.equipped then
+            -- 1. Kích hoạt đòn đánh (Visual)
+            if AC.attack then pcall(function() AC.attack() end) end
+            
+            -- 2. BLADE HIT INJECTION (SÁT THƯƠNG THẬT)
+            -- Thay vì chờ game check va chạm, ta ép game nhận va chạm với mọi quái xung quanh
+            for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                    local Root = enemy:FindFirstChild("HumanoidRootPart")
+                    if Root then
+                        local Dist = (Root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        
+                        -- Nếu quái nằm trong bán kính 60m
+                        if Dist < SETTINGS.AttackRadius then
+                            -- Ép xung hit (Gửi tín hiệu chém trúng)
+                            -- Dùng coroutine để spam cực nhanh mà không lag main thread
+                            task.spawn(function()
+                                pcall(function()
+                                    -- Đây là hàm game dùng để tính dmg. Ta gọi thủ công.
+                                    AC.bladeHit(Root)
+                                end)
+                            end)
+                        end
+                    end
                 end
+            end
+        else
+            -- Auto Equip tốt hơn
+            local Tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+            if Tool and (Tool.ToolTip == "Melee" or Tool.ToolTip == "Sword") then
+                LocalPlayer.Character.Humanoid:EquipTool(Tool)
             end
         end
     end)
 end
 
--- [MAIN LOOP] CHẠY LIÊN TỤC
-RunService.RenderStepped:Connect(function()
-    -- 1. Kích hoạt Reach (Phải làm liên tục vì game sẽ tự reset size)
-    DoReach()
+-- Loop Fast Attack riêng biệt (Tốc độ ánh sáng)
+task.spawn(function()
+    while true do -- Dùng while true để max tốc độ
+        AdvancedAttack()
+        task.wait() -- 0.01s delay (Super Fast)
+    end
+end)
+
+-- [5] HELPER FUNCTIONS
+local function CommF(...) 
+    local args = {...}
+    pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args)) end)
+end
+
+local function FlyTo(targetCFrame)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    local Root = LocalPlayer.Character.HumanoidRootPart
+    Root.Velocity = Vector3.new(0,0,0)
+    local Dist = (Root.Position - targetCFrame.Position).Magnitude
+    if Dist < 5 then return end
     
-    -- 2. Kích hoạt đánh
-    if SETTINGS.AttackSpeed then
-        DoAttack()
+    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / SETTINGS.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+    local BV = Instance.new("BodyVelocity", Root)
+    BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    Tween:Play(); Tween.Completed:Wait(); BV:Destroy()
+end
+
+-- [6] QUEST LOGIC (1-700)
+local QUEST_DATA = {
+    {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
+    {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
+    {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
+    {Min=30, Max=40, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=1, Mob="Pirate"},
+    {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"},
+    {Min=60, Max=75, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=1, Mob="Desert Bandit"},
+    {Min=75, Max=90, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=2, Mob="Desert Officer"},
+    {Min=90, Max=105, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=1, Mob="Snow Bandit"},
+    {Min=105, Max=120, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=2, Mob="Snowman"},
+    {Min=120, Max=150, Npc="Marine Quest Giver", Quest="MarineQuest2", Idx=1, Mob="Chief Petty Officer"},
+    {Min=150, Max=175, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=1, Mob="Sky Bandit"},
+    {Min=175, Max=190, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=2, Mob="Dark Master"},
+    {Min=190, Max=210, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=1, Mob="Prisoner"},
+    {Min=210, Max=230, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=2, Mob="Dangerous Prisoner"},
+    {Min=230, Max=250, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=1, Mob="Toga Warrior"},
+    {Min=250, Max=300, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=2, Mob="Gladiator"},
+    {Min=300, Max=330, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=1, Mob="Military Soldier"},
+    {Min=330, Max=375, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=2, Mob="Military Spy"},
+    {Min=375, Max=400, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=1, Mob="Fishman Warrior"},
+    {Min=400, Max=450, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=2, Mob="Fishman Commando"},
+    {Min=450, Max=475, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=1, Mob="God's Guard"},
+    {Min=475, Max=525, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=2, Mob="Shanda"},
+    {Min=525, Max=550, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=1, Mob="Royal Squad"},
+    {Min=550, Max=625, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=2, Mob="Royal Soldier"},
+    {Min=625, Max=650, Npc="Galley Captain", Quest="FountainQuest", Idx=1, Mob="Galley Pirate"},
+    {Min=650, Max=700, Npc="Galley Captain", Quest="FountainQuest", Idx=2, Mob="Galley Captain"},
+}
+
+-- [7] MAIN LOOP
+RunService.Stepped:Connect(function()
+    if LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+        if LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState(11)
+        end
+    end
+end)
+
+SetStatus("ADVANCED COMBAT: ON")
+
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            local Level = LocalPlayer.Data.Level.Value
+            
+            -- Quest Find
+            local MyQuestData = nil
+            for _, d in ipairs(QUEST_DATA) do
+                if Level >= d.Min and Level < d.Max then MyQuestData = d; break end
+            end
+            
+            if not MyQuestData then 
+                SetStatus("Max Level/Error")
+                return 
+            end
+
+            local PlayerGui = LocalPlayer.PlayerGui.Main
+            local HasQuest = (PlayerGui:FindFirstChild("Quest") and PlayerGui.Quest.Visible)
+
+            if not HasQuest then
+                SetStatus("Nhận Quest: " .. MyQuestData.Mob)
+                if Workspace.NPCs:FindFirstChild(MyQuestData.Npc) then
+                   FlyTo(Workspace.NPCs[MyQuestData.Npc].Head.CFrame)
+                   CommF("StartQuest", MyQuestData.Quest, MyQuestData.Idx)
+                   task.wait(1)
+                else
+                   SetStatus("Load Map (Bay đến bãi quái)...")
+                   local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(MyQuestData.Mob)
+                   if Spawns then FlyTo(Spawns.CFrame * CFrame.new(0, 50, 0)) end
+                end
+            else
+                -- Đánh quái
+                SetStatus("Đang giết: " .. MyQuestData.Mob)
+                
+                local Target = nil
+                for _, v in ipairs(Workspace.Enemies:GetChildren()) do
+                    if v.Name == MyQuestData.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        Target = v
+                        break
+                    end
+                end
+                
+                if Target then
+                    -- Bay đến gần (40 stud là đủ vì có Reach 60)
+                    FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
+                    
+                    -- Gom quái (Đơn giản hóa)
+                    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                        if enemy.Name == Target.Name and enemy ~= Target and (enemy.HumanoidRootPart.Position - Target.HumanoidRootPart.Position).Magnitude < 300 then
+                            enemy.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame
+                            enemy.HumanoidRootPart.CanCollide = false
+                            enemy.Humanoid.WalkSpeed = 0
+                        end
+                    end
+                else
+                    SetStatus("Đợi spawn...")
+                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(MyQuestData.Mob)
+                    if Spawns then FlyTo(Spawns.CFrame * CFrame.new(0, 20, 0)) end
+                end
+            end
+        end)
     end
 end)
