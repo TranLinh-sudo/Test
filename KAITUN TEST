@@ -1,148 +1,201 @@
 --[[
     ============================================================
-    PROJECT: KAITUN SEA 1 - V17 (ADVANCED COMBAT)
+    PROJECT: KAITUN TITAN (SEA 1)
+    TYPE: ADVANCED MOBILE AUTO FARM
     DEVELOPER: GEMINI
-    METHOD: BLADE HIT INJECTION (KHÔNG CẦN CLICK)
+    BUILD: 2026.1.6
     ============================================================
 ]]
 
--- [1] GUI DEBUGGER
+-- [1] SETTINGS & VARIABLES
+getgenv().TitanSettings = {
+    FlySpeed = 350,            -- Tốc độ bay (Nhanh hơn)
+    FarmDistance = 15,         -- Đứng gần sát để đảm bảo trúng
+    AutoStats = true,          -- Tự nâng chỉ số
+    AutoHaki = true,           -- Tự bật Haki
+    FastAttack = true,         -- Tự đánh nhanh
+    WhiteScreen = false,       -- Bật màn hình trắng để giảm lag (False = Tắt)
+    BringMobs = true           -- Gom quái
+}
+
+-- [2] GUI DEBUGGER (GIAO DIỆN TRẠNG THÁI)
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
 
 local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local StatusLabel = Instance.new("TextLabel")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local Status = Instance.new("TextLabel")
+local ProgressBar = Instance.new("Frame")
 
-ScreenGui.Name = "GeminiV17_Combat"
+ScreenGui.Name = "TitanInterface"
 if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = CoreGui end
 
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Frame.BackgroundTransparency = 0.5
-Frame.Position = UDim2.new(0.2, 0, 0.05, 0)
-Frame.Size = UDim2.new(0.6, 0, 0.15, 0)
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.2, 0, 0.02, 0)
+MainFrame.Size = UDim2.new(0.6, 0, 0.12, 0)
 
-StatusLabel.Parent = Frame
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Size = UDim2.new(1, 0, 1, 0)
-StatusLabel.Font = Enum.Font.SourceSansBold
-StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Màu Tím (Advanced)
-StatusLabel.TextSize = 18
-StatusLabel.Text = "LOADING ADVANCED COMBAT..."
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, 0, 0.4, 0)
+Title.Font = Enum.Font.GothamBlack
+Title.Text = "⚡ KAITUN TITAN ⚡"
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.TextSize = 16
+
+Status.Parent = MainFrame
+Status.BackgroundTransparency = 1
+Status.Position = UDim2.new(0, 0, 0.4, 0)
+Status.Size = UDim2.new(1, 0, 0.4, 0)
+Status.Font = Enum.Font.GothamBold
+Status.TextColor3 = Color3.fromRGB(0, 255, 255)
+Status.TextSize = 14
+Status.Text = "Initializing..."
+
+ProgressBar.Parent = MainFrame
+ProgressBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Position = UDim2.new(0, 0, 0.9, 0)
+ProgressBar.Size = UDim2.new(0, 0, 0.1, 0) -- Sẽ chạy animation
 
 local function SetStatus(msg)
-    StatusLabel.Text = msg
+    Status.Text = msg
+    -- Hiệu ứng thanh chạy
+    ProgressBar:TweenSize(UDim2.new(math.random(3,10)/10, 0, 0.1, 0), "Out", "Quad", 0.2)
 end
 
--- [2] SERVICES & SETUP
+-- [3] SERVICES LOAD
+SetStatus("Loading Services...")
 if not game:IsLoaded() then game.Loaded:Wait() end
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- Đợi load xong
-repeat task.wait() until LocalPlayer.Character
-repeat task.wait() until LocalPlayer:FindFirstChild("Data")
-
--- [3] CONFIGURATION
-local SETTINGS = {
-    FlySpeed = 300,
-    FarmDistance = 40, -- Tăng khoảng cách farm lên vì ta có Reach
-    AttackRadius = 60  -- Phạm vi gây sát thương (Reach)
-}
-
--- [4] *** ADVANCED COMBAT MODULE (CỐT LÕI MỚI) ***
-local CombatFramework = require(LocalPlayer.PlayerScripts.CombatFramework)
-local CameraShaker = require(LocalPlayer.PlayerScripts.CombatFramework.CameraShaker)
-local RigController = require(LocalPlayer.PlayerScripts.CombatFramework.RigController)
-
--- Tắt rung lắc
-CameraShaker.CameraShakeInstance.CameraShakeState = {FadingIn=3, FadingOut=2, Sustained=0, Inactive=1}
-
--- Hàm lấy Cooldown thực tế (để bypass)
-local function GetCurrentBlade()
-    local p1 = CombatFramework.activeController
-    local ret = p1.blades[1]
-    if not ret then return nil end
-    while ret.Parent ~= game.Players.LocalPlayer.Character do 
-        ret = ret.Parent 
-    end
-    return ret
+-- [4] WAITING FOR DATA
+while not LocalPlayer:FindFirstChild("Data") or not LocalPlayer.Data:FindFirstChild("Level") do
+    SetStatus("Waiting for Data...")
+    task.wait(1)
 end
+SetStatus("Data Loaded! Start Farming...")
 
--- HÀM TẤN CÔNG NÂNG CAO (GÂY SÁT THƯƠNG TRỰC TIẾP)
-local function AdvancedAttack()
-    pcall(function()
-        local AC = CombatFramework.activeController
-        
-        if AC and AC.equipped then
-            -- 1. Kích hoạt đòn đánh (Visual)
-            if AC.attack then pcall(function() AC.attack() end) end
-            
-            -- 2. BLADE HIT INJECTION (SÁT THƯƠNG THẬT)
-            -- Thay vì chờ game check va chạm, ta ép game nhận va chạm với mọi quái xung quanh
-            for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
-                if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-                    local Root = enemy:FindFirstChild("HumanoidRootPart")
-                    if Root then
-                        local Dist = (Root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                        
-                        -- Nếu quái nằm trong bán kính 60m
-                        if Dist < SETTINGS.AttackRadius then
-                            -- Ép xung hit (Gửi tín hiệu chém trúng)
-                            -- Dùng coroutine để spam cực nhanh mà không lag main thread
-                            task.spawn(function()
-                                pcall(function()
-                                    -- Đây là hàm game dùng để tính dmg. Ta gọi thủ công.
-                                    AC.bladeHit(Root)
-                                end)
-                            end)
-                        end
-                    end
-                end
-            end
-        else
-            -- Auto Equip tốt hơn
-            local Tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-            if Tool and (Tool.ToolTip == "Melee" or Tool.ToolTip == "Sword") then
-                LocalPlayer.Character.Humanoid:EquipTool(Tool)
-            end
-        end
-    end)
-end
+-- [5] CORE ENGINE (HỆ THỐNG CỐT LÕI)
 
--- Loop Fast Attack riêng biệt (Tốc độ ánh sáng)
-task.spawn(function()
-    while true do -- Dùng while true để max tốc độ
-        AdvancedAttack()
-        task.wait() -- 0.01s delay (Super Fast)
-    end
-end)
-
--- [5] HELPER FUNCTIONS
-local function CommF(...) 
-    local args = {...}
-    pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer(unpack(args)) end)
+-- >> SYSTEM 1: MOVEMENT (DI CHUYỂN)
+local function GetDistance(targetPos)
+    if not LocalPlayer.Character then return 99999 end
+    return (LocalPlayer.Character.HumanoidRootPart.Position - targetPos).Magnitude
 end
 
 local function FlyTo(targetCFrame)
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
     local Root = LocalPlayer.Character.HumanoidRootPart
-    Root.Velocity = Vector3.new(0,0,0)
-    local Dist = (Root.Position - targetCFrame.Position).Magnitude
-    if Dist < 5 then return end
     
-    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / SETTINGS.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-    local BV = Instance.new("BodyVelocity", Root)
-    BV.Velocity = Vector3.new(0,0,0); BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-    Tween:Play(); Tween.Completed:Wait(); BV:Destroy()
+    -- Anti Gravity
+    if not Root:FindFirstChild("TitanFlight") then
+        local BV = Instance.new("BodyVelocity", Root)
+        BV.Name = "TitanFlight"
+        BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        BV.Velocity = Vector3.new(0,0,0)
+    end
+    
+    local Dist = (Root.Position - targetCFrame.Position).Magnitude
+    
+    -- Nếu gần thì teleport luôn cho nhanh
+    if Dist < 100 then
+        Root.CFrame = targetCFrame
+        return
+    end
+
+    -- Tính toán Tween
+    local Speed = TitanSettings.FlySpeed
+    local Time = Dist / Speed
+    local TInfo = TweenInfo.new(Time, Enum.EasingStyle.Linear)
+    local Tween = TweenService:Create(Root, TInfo, {CFrame = targetCFrame})
+    
+    Tween:Play()
+    
+    -- Vòng lặp kiểm tra (để có thể hủy bay nếu cần)
+    local Start = tick()
+    while (tick() - Start) < Time do
+        if not LocalPlayer.Character or LocalPlayer.Character.Humanoid.Health <= 0 then 
+            Tween:Cancel()
+            break 
+        end
+        -- Nếu đã đến rất gần
+        if (Root.Position - targetCFrame.Position).Magnitude < 10 then
+            break
+        end
+        RunService.Stepped:Wait()
+    end
+    
+    -- Dọn dẹp
+    if Root:FindFirstChild("TitanFlight") then
+        Root.CFrame = targetCFrame -- Chốt vị trí cuối
+        -- Giữ BodyVelocity để treo trên không, không xóa ngay
+        Root.TitanFlight.Velocity = Vector3.new(0,0,0)
+    end
 end
 
--- [6] QUEST LOGIC (1-700)
-local QUEST_DATA = {
+-- >> SYSTEM 2: ATTACK ENGINE (MOBILE OPTIMIZED)
+-- Đây là phần quan trọng nhất: Dùng Tool Activate + Face Target
+local function EquipWeapon()
+    pcall(function()
+        local Backpack = LocalPlayer.Backpack
+        local Char = LocalPlayer.Character
+        -- Ưu tiên Melee (Võ) hoặc Sword (Kiếm)
+        local Weapon = Char:FindFirstChildOfClass("Tool")
+        if not Weapon then
+            for _, v in pairs(Backpack:GetChildren()) do
+                if v:IsA("Tool") and (v.ToolTip == "Melee" or v.ToolTip == "Sword") then
+                    Char.Humanoid:EquipTool(v)
+                    break
+                end
+            end
+        end
+    end)
+end
+
+local function AttackMob(TargetInstance)
+    if not TargetInstance or not LocalPlayer.Character then return end
+    
+    -- 1. Cầm vũ khí
+    EquipWeapon()
+    
+    -- 2. Hướng mặt về phía quái (Bắt buộc để đánh trúng)
+    local Root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local TargetRoot = TargetInstance:FindFirstChild("HumanoidRootPart")
+    
+    if Root and TargetRoot then
+        Root.CFrame = CFrame.lookAt(Root.Position, TargetRoot.Position)
+    end
+    
+    -- 3. Kích hoạt đòn đánh (Spam Click)
+    local Tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if Tool then
+        -- Cách 1: Activate chuẩn
+        Tool:Activate()
+        
+        -- Cách 2: VirtualInput (Backup)
+        pcall(function()
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end)
+    end
+    
+    -- 4. Auto Haki
+    if TitanSettings.AutoHaki and not LocalPlayer.Character:FindFirstChild("HasBuso") then
+        local HakiRemote = ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+        if HakiRemote then HakiRemote:InvokeServer("Buso") end
+    end
+end
+
+-- >> SYSTEM 3: QUEST MANAGER (FULL DATA)
+local QUESTS = {
     {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
     {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
     {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
@@ -171,80 +224,117 @@ local QUEST_DATA = {
     {Min=650, Max=700, Npc="Galley Captain", Quest="FountainQuest", Idx=2, Mob="Galley Captain"},
 }
 
--- [7] MAIN LOOP
+-- [6] MAIN LOOP (LOGIC THÔNG MINH)
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            -- A. Auto Stats
+            if TitanSettings.AutoStats then
+                local Pts = LocalPlayer.Data.Points.Value
+                if Pts > 0 then
+                    local Melee = math.floor(Pts * 0.7) -- 70% Melee
+                    local Def = Pts - Melee
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Melee", Melee)
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Defense", Def)
+                end
+            end
+
+            -- B. Farm Logic
+            local Level = LocalPlayer.Data.Level.Value
+            
+            -- Xác định Quest phù hợp
+            local CurrentQuestData = nil
+            for _, q in ipairs(QUESTS) do
+                if Level >= q.Min and Level < q.Max then CurrentQuestData = q; break end
+            end
+            
+            if not CurrentQuestData then SetStatus("Max Level Reached!"); return end
+            
+            -- Kiểm tra xem đã nhận Quest chưa
+            local HasQuest = false
+            local PlayerGui = LocalPlayer.PlayerGui.Main
+            if PlayerGui:FindFirstChild("Quest") and PlayerGui.Quest.Visible then 
+                HasQuest = true 
+            end
+            
+            if not HasQuest then
+                -- >> GIAI ĐOẠN 1: ĐI NHẬN QUEST
+                SetStatus("Nhận Quest: " .. CurrentQuestData.Mob)
+                
+                -- Tìm NPC
+                local NPC = Workspace.NPCs:FindFirstChild(CurrentQuestData.Npc)
+                if NPC then
+                    -- Bay đến NPC
+                    FlyTo(NPC.Head.CFrame)
+                    -- Nhận Quest
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", CurrentQuestData.Quest, CurrentQuestData.Idx)
+                else
+                    -- FIX LỖI KHÔNG TÌM THẤY ĐẢO: Bay đến bãi quái để load map
+                    SetStatus("Tìm Đảo: " .. CurrentQuestData.Mob)
+                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(CurrentQuestData.Mob)
+                    if Spawns then
+                        FlyTo(Spawns.CFrame * CFrame.new(0, 60, 0)) -- Bay cao để nhìn bao quát
+                    end
+                end
+            else
+                -- >> GIAI ĐOẠN 2: ĐI FARM
+                SetStatus("Tiêu diệt: " .. CurrentQuestData.Mob)
+                
+                local Target = nil
+                -- Tìm quái gần nhất
+                for _, v in pairs(Workspace.Enemies:GetChildren()) do
+                    if v.Name == CurrentQuestData.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        Target = v
+                        break -- Lấy con đầu tiên thấy
+                    end
+                end
+                
+                if Target then
+                    -- Bay đến quái
+                    local FarmPos = Target.HumanoidRootPart.CFrame * CFrame.new(0, 0, TitanSettings.FarmDistance)
+                    -- Đảo ngược CFrame để mặt đối mặt với quái
+                    FarmPos = CFrame.lookAt(FarmPos.Position, Target.HumanoidRootPart.Position)
+                    
+                    FlyTo(FarmPos)
+                    AttackMob(Target)
+                    
+                    -- Gom quái (Nam châm)
+                    if TitanSettings.BringMobs then
+                        for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                            if enemy.Name == Target.Name and enemy ~= Target then
+                                if (enemy.HumanoidRootPart.Position - Target.HumanoidRootPart.Position).Magnitude < 300 then
+                                    enemy.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame
+                                    enemy.HumanoidRootPart.CanCollide = false
+                                    enemy.Humanoid.WalkSpeed = 0
+                                    enemy.Head.CanCollide = false
+                                end
+                            end
+                        end
+                    end
+                else
+                    -- Không thấy quái -> Bay đến chỗ Spawn đợi
+                    SetStatus("Chờ quái hồi sinh...")
+                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(CurrentQuestData.Mob)
+                    if Spawns then
+                        FlyTo(Spawns.CFrame * CFrame.new(0, 30, 0))
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- [7] UTILITIES (TIỆN ÍCH)
+-- Tự động bật lại khi chết
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+end)
+
+-- Noclip (Đi xuyên tường)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
-        if LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid:ChangeState(11)
-        end
-    end
-end)
-
-SetStatus("ADVANCED COMBAT: ON")
-
-task.spawn(function()
-    while task.wait() do
-        pcall(function()
-            local Level = LocalPlayer.Data.Level.Value
-            
-            -- Quest Find
-            local MyQuestData = nil
-            for _, d in ipairs(QUEST_DATA) do
-                if Level >= d.Min and Level < d.Max then MyQuestData = d; break end
-            end
-            
-            if not MyQuestData then 
-                SetStatus("Max Level/Error")
-                return 
-            end
-
-            local PlayerGui = LocalPlayer.PlayerGui.Main
-            local HasQuest = (PlayerGui:FindFirstChild("Quest") and PlayerGui.Quest.Visible)
-
-            if not HasQuest then
-                SetStatus("Nhận Quest: " .. MyQuestData.Mob)
-                if Workspace.NPCs:FindFirstChild(MyQuestData.Npc) then
-                   FlyTo(Workspace.NPCs[MyQuestData.Npc].Head.CFrame)
-                   CommF("StartQuest", MyQuestData.Quest, MyQuestData.Idx)
-                   task.wait(1)
-                else
-                   SetStatus("Load Map (Bay đến bãi quái)...")
-                   local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(MyQuestData.Mob)
-                   if Spawns then FlyTo(Spawns.CFrame * CFrame.new(0, 50, 0)) end
-                end
-            else
-                -- Đánh quái
-                SetStatus("Đang giết: " .. MyQuestData.Mob)
-                
-                local Target = nil
-                for _, v in ipairs(Workspace.Enemies:GetChildren()) do
-                    if v.Name == MyQuestData.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        Target = v
-                        break
-                    end
-                end
-                
-                if Target then
-                    -- Bay đến gần (40 stud là đủ vì có Reach 60)
-                    FlyTo(Target.HumanoidRootPart.CFrame * CFrame.new(0, SETTINGS.FarmDistance, 0))
-                    
-                    -- Gom quái (Đơn giản hóa)
-                    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
-                        if enemy.Name == Target.Name and enemy ~= Target and (enemy.HumanoidRootPart.Position - Target.HumanoidRootPart.Position).Magnitude < 300 then
-                            enemy.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame
-                            enemy.HumanoidRootPart.CanCollide = false
-                            enemy.Humanoid.WalkSpeed = 0
-                        end
-                    end
-                else
-                    SetStatus("Đợi spawn...")
-                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(MyQuestData.Mob)
-                    if Spawns then FlyTo(Spawns.CFrame * CFrame.new(0, 20, 0)) end
-                end
-            end
-        end)
     end
 end)
