@@ -1,272 +1,49 @@
---[[
-    ============================================================
-    PROJECT: KAITUN DIAMOND (V19)
-    STATUS: STABLE MOBILE RELEASE
-    DEVELOPER: GEMINI
-    ============================================================
-]]
-
--- [1] SERVICES
-if not game:IsLoaded() then game.Loaded:Wait() end
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local LocalPlayer = Players.LocalPlayer
-
--- [2] UI STATUS (BẢNG TRẠNG THÁI)
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local StatusLabel = Instance.new("TextLabel")
-
-ScreenGui.Name = "KaitunDiamond"
-if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = game.CoreGui end
-
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderColor3 = Color3.fromRGB(0, 255, 255)
-Frame.Position = UDim2.new(0.25, 0, 0.05, 0)
-Frame.Size = UDim2.new(0.5, 0, 0.1, 0)
-
-StatusLabel.Parent = Frame
-StatusLabel.Size = UDim2.new(1,0,1,0)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-StatusLabel.Font = Enum.Font.GothamBold
-StatusLabel.TextScaled = true
-StatusLabel.Text = "💎 DIAMOND LOADING... 💎"
-
-local function SetStatus(txt)
-    StatusLabel.Text = txt
-end
-
--- [3] VARIABLES & SETTINGS
-local Settings = {
-    FlySpeed = 300,
-    FarmDistance = 12, -- Khoảng cách cực gần để chắc chắn đánh trúng
-    AutoStats = true,
-    BringMob = true
-}
-
--- Đợi Data load
-repeat task.wait() until LocalPlayer.Character
-repeat task.wait() until LocalPlayer:FindFirstChild("Data")
-repeat task.wait() until LocalPlayer.Data:FindFirstChild("Level")
-
--- [4] CORE FUNCTIONS
-
--- A. HỆ THỐNG DI CHUYỂN (TWEEN V2)
-local function FlyTo(targetCFrame)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    local Root = LocalPlayer.Character.HumanoidRootPart
-    
-    -- Tắt va chạm để không kẹt tường
-    if LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:ChangeState(11) 
-    end
-
-    local Dist = (Root.Position - targetCFrame.Position).Magnitude
-    if Dist < 5 then 
-        Root.CFrame = targetCFrame
-        return 
-    end
-    
-    -- Tạo BodyVelocity để giữ nhân vật bay
-    if not Root:FindFirstChild("FlyVel") then
-        local BV = Instance.new("BodyVelocity", Root)
-        BV.Name = "FlyVel"
-        BV.Velocity = Vector3.new(0,0,0)
-        BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-    end
-    
-    local Tween = TweenService:Create(Root, TweenInfo.new(Dist / Settings.FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-    Tween:Play()
-    Tween.Completed:Wait()
-    
-    -- Xóa BodyVelocity khi đến nơi (để nhân vật rơi xuống hoặc di chuyển tiếp)
-    if Root:FindFirstChild("FlyVel") then Root.FlyVel:Destroy() end
-end
-
--- B. HỆ THỐNG TẤN CÔNG (STICKY AIM)
-local function EquipWeapon()
-    pcall(function()
-        local Backpack = LocalPlayer.Backpack
-        local Char = LocalPlayer.Character
-        local Tool = Char:FindFirstChildOfClass("Tool")
-        
-        -- Nếu chưa cầm tool thì tìm trong balo
-        if not Tool then
-            for _, v in pairs(Backpack:GetChildren()) do
-                if v:IsA("Tool") and (v.ToolTip == "Melee" or v.ToolTip == "Sword") then
-                    Char.Humanoid:EquipTool(v)
-                    break
-                end
-            end
-        end
-    end)
-end
-
-local function Attack(Target)
-    if not Target or not LocalPlayer.Character then return end
-    local Root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    
-    -- 1. Cầm vũ khí
-    EquipWeapon()
-    
-    -- 2. KHÓA MỤC TIÊU (Quan trọng)
-    -- Luôn nhìn thẳng vào quái để đánh trúng
-    if Root and Target:FindFirstChild("HumanoidRootPart") then
-        Root.CFrame = CFrame.lookAt(Root.Position, Target.HumanoidRootPart.Position)
-    end
-    
-    -- 3. Kích hoạt Tool (Spam cả 2 cách)
-    local Tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-    if Tool then
-        Tool:Activate() -- Cách chuẩn
-        -- Cách backup cho Mobile
-        pcall(function()
-            VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,1)
-            VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,1)
-        end)
-    end
-    
-    -- 4. Auto Haki
-    pcall(function()
-        if not LocalPlayer.Character:FindFirstChild("HasBuso") then
-             ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
-        end
-    end)
-end
-
--- [5] QUEST DATA (1-700)
-local QUESTS = {
-    {Min=1, Max=10, Npc="Bandit Quest Giver", Quest="BanditQuest1", Idx=1, Mob="Bandit"},
-    {Min=10, Max=15, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=1, Mob="Monkey"},
-    {Min=15, Max=30, Npc="Jungle Quest Giver", Quest="JungleQuest", Idx=2, Mob="Gorilla"},
-    {Min=30, Max=40, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=1, Mob="Pirate"},
-    {Min=40, Max=60, Npc="Buggy Quest Giver", Quest="BuggyQuest1", Idx=2, Mob="Brute"},
-    {Min=60, Max=75, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=1, Mob="Desert Bandit"},
-    {Min=75, Max=90, Npc="Desert Quest Giver", Quest="DesertQuest", Idx=2, Mob="Desert Officer"},
-    {Min=90, Max=105, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=1, Mob="Snow Bandit"},
-    {Min=105, Max=120, Npc="Snow Village Quest Giver", Quest="SnowQuest", Idx=2, Mob="Snowman"},
-    {Min=120, Max=150, Npc="Marine Quest Giver", Quest="MarineQuest2", Idx=1, Mob="Chief Petty Officer"},
-    {Min=150, Max=175, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=1, Mob="Sky Bandit"},
-    {Min=175, Max=190, Npc="Sky Quest Giver", Quest="SkyQuest", Idx=2, Mob="Dark Master"},
-    {Min=190, Max=210, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=1, Mob="Prisoner"},
-    {Min=210, Max=230, Npc="Prisoner Quest Giver", Quest="PrisonerQuest", Idx=2, Mob="Dangerous Prisoner"},
-    {Min=230, Max=250, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=1, Mob="Toga Warrior"},
-    {Min=250, Max=300, Npc="Colosseum Quest Giver", Quest="ColosseumQuest", Idx=2, Mob="Gladiator"},
-    {Min=300, Max=330, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=1, Mob="Military Soldier"},
-    {Min=330, Max=375, Npc="Magma Quest Giver", Quest="MagmaQuest", Idx=2, Mob="Military Spy"},
-    {Min=375, Max=400, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=1, Mob="Fishman Warrior"},
-    {Min=400, Max=450, Npc="Fishman Quest Giver", Quest="FishmanQuest", Idx=2, Mob="Fishman Commando"},
-    {Min=450, Max=475, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=1, Mob="God's Guard"},
-    {Min=475, Max=525, Npc="Upper Yard Quest Giver", Quest="SkyExp1Quest", Idx=2, Mob="Shanda"},
-    {Min=525, Max=550, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=1, Mob="Royal Squad"},
-    {Min=550, Max=625, Npc="Upper Yard Quest Giver 2", Quest="SkyExp2Quest", Idx=2, Mob="Royal Soldier"},
-    {Min=625, Max=650, Npc="Galley Captain", Quest="FountainQuest", Idx=1, Mob="Galley Pirate"},
-    {Min=650, Max=700, Npc="Galley Captain", Quest="FountainQuest", Idx=2, Mob="Galley Captain"},
-}
-
--- [6] LOOP CHÍNH (MAIN THREAD)
-task.spawn(function()
-    while task.wait() do
-        -- Bọc pcall để script không bao giờ dừng dù gặp lỗi
-        pcall(function()
-            local Level = LocalPlayer.Data.Level.Value
-            
-            -- Auto Stats
-            if Settings.AutoStats then
-                local Pts = LocalPlayer.Data.Points.Value
-                if Pts > 0 then
-                    local Melee = math.floor(Pts * 0.7)
-                    ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Melee", Melee)
-                    ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Defense", Pts - Melee)
-                end
-            end
-
-            -- Tìm Quest
-            local Data = nil
-            for _, d in ipairs(QUESTS) do
-                if Level >= d.Min and Level < d.Max then Data = d; break end
-            end
-            
-            if not Data then SetStatus("Max Level Reached!"); return end
-            
-            local HasQuest = LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") and LocalPlayer.PlayerGui.Main.Quest.Visible
-            
-            if not HasQuest then
-                -- >> CHƯA CÓ QUEST -> ĐI NHẬN
-                SetStatus("Đi nhận Quest: " .. Data.Mob)
-                
-                local NPC = Workspace.NPCs:FindFirstChild(Data.Npc)
-                if NPC then
-                    FlyTo(NPC.Head.CFrame)
-                    ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", Data.Quest, Data.Idx)
-                    task.wait(0.5)
-                else
-                    -- FIX MAP LOAD: Không thấy NPC thì bay đến bãi quái
-                    SetStatus("Load Map: Bay đến " .. Data.Mob)
-                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(Data.Mob)
-                    if Spawns then
-                        FlyTo(Spawns.CFrame * CFrame.new(0, 50, 0)) -- Bay cao để load map
-                        task.wait(2) -- Đứng đợi map load 2s
-                    else
-                        -- Nếu cả NPC và Bãi quái chưa load -> Về đảo Khỉ (An toàn)
-                        FlyTo(CFrame.new(-1147, 16, 1637))
-                    end
-                end
-            else
-                -- >> CÓ QUEST -> ĐI FARM
-                SetStatus("Đang Farm: " .. Data.Mob)
-                
-                local Target = nil
-                -- Tìm quái còn sống
-                for _, v in pairs(Workspace.Enemies:GetChildren()) do
-                    if v.Name == Data.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        Target = v
-                        break
-                    end
-                end
-                
-                if Target then
-                    local TPos = Target.HumanoidRootPart.CFrame
-                    -- 1. Bay đến vị trí tấn công (Gần sát 12 stud)
-                    FlyTo(TPos * CFrame.new(0, 0, Settings.FarmDistance))
-                    
-                    -- 2. Đánh
-                    Attack(Target)
-                    
-                    -- 3. Gom quái (Nam châm)
-                    if Settings.BringMob then
-                        for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
-                            if enemy.Name == Data.Mob and enemy ~= Target and (enemy.HumanoidRootPart.Position - TPos.Position).Magnitude < 300 then
-                                enemy.HumanoidRootPart.CFrame = TPos -- Kéo lại
-                                enemy.HumanoidRootPart.CanCollide = false
-                                enemy.Humanoid.WalkSpeed = 0
-                            end
-                        end
-                    end
-                else
-                    -- Không thấy quái -> Đứng chờ ở bãi spawn
-                    SetStatus("Chờ quái hồi sinh...")
-                    local Spawns = Workspace._WorldOrigin.EnemySpawns:FindFirstChild(Data.Mob)
-                    if Spawns then
-                        FlyTo(Spawns.CFrame * CFrame.new(0, 20, 0))
-                    end
-                end
-            end
-        end)
-    end
-end)
-
--- Anti-Stuck & Noclip
-RunService.Stepped:Connect(function()
-    if LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
-        end
-    end
-end)
+getgenv().Configs = {
+    ["Quest"] = {
+        ["Evo Race V2"] = true;
+        ["Evo Race V3"] = true;
+        ["RGB Haki"] = true;
+        ["Pull Lerver"] = true;
+    };
+        ["Webhook"] = {
+        ["Url Webhook"] = "";
+        ["Ping discord"] = "";
+        ["Time Send"] = "10m";
+    };
+    ["Sword"] = {
+        "Dual-Headed Blade";
+        "Smoke Admiral";
+        "Wardens Sword";
+        "Cutlass";
+        "Katana";
+        "Dual Katana";
+        "Triple Katana";
+        "Iron Mace";
+        "Saber";
+        "Pole (1st Form)";
+        "Gravity Blade";
+        "Longsword";
+        "Rengoku";
+        "Midnight Blade";
+        "Soul Cane";
+        "Bisento";
+        "Yama";
+        "Tushita";
+        "Cursed Dual Katana";
+    };
+    ["Gun"] = {
+        "Skull Guitar";
+        "Kabucha";
+        "Venom Bow";
+        "Musket";
+        "Flintlock";
+        "Refined Slingshot";
+        "Magma Blaster";
+        "Dual Flintlock";
+        "Cannon";
+        "Bizarre Revolver";
+        "Bazooka";
+    };
+    ["FPS Booster"] = true;
+};
+loadstring(game:HttpGet("https://raw.githubusercontent.com/shinichi-dz/phucshinsayhi/refs/heads/main/KaitunBloxFruit.lua"))()
