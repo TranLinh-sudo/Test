@@ -1,5 +1,5 @@
 Config = {
-Team = "pirates",
+Team = "Pirates",
 Configuration = {
 HopWhenIdle = true,
 AutoHop = true,
