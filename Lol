@@ -2,7 +2,7 @@ repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
 getgenv().Configs = {
     ["Quest"] = {
         ["Evo Race V1"] = true;
-        ["Evo Race V2"] = true;
+        ["Evo Race V2"] = false;
         ["RGB Haki"] = true;
         ["Pull Lerver"] = true;
     };
