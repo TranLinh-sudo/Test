@@ -14,7 +14,7 @@ AutoFullyMelees = true,
 Saber = true,
 CursedDualKatana = true,
 -- Guns
-SoulGuitar = true,
+SoulGuitar = false,
 -- Upgrades
 RaceV2 = true
 },
