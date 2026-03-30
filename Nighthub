@@ -4,7 +4,7 @@ getgenv().Config = {
 
     FarmConfig = {
 
-        ["Out game when done all"] = true,
+        ["Out game when done all"] = false,
 
         ["Bypass Teleport"] = true,
 
@@ -16,7 +16,7 @@ getgenv().Config = {
 
         ["Saber"] = true,
 
-        ["Pole (1st form)"] = true,
+        ["Pole (1st form)"] = false,
 
         ["Skull Guitar"] = false,
 
