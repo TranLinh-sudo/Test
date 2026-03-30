@@ -18,7 +18,7 @@ getgenv().Config = {
 
         ["Pole (1st form)"] = true,
 
-        ["Skull Guitar"] = true,
+        ["Skull Guitar"] = falas,
 
         ["Cursed Dual Katana"] = true,
 
